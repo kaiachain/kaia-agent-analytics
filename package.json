@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/kaiachain/kaia-agent-analytics#readme",
   "dependencies": {
+    "@duneanalytics/client-sdk": "^0.2.5",
     "@types/node": "^22.14.1",
     "dotenv": "^16.5.0",
     "typescript": "^5.8.3"
