@@ -1,0 +1,32 @@
+{
+  "name": "kaia-agent-analytics",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kaiachain/kaia-agent-analytics.git"
+  },
+  "keywords": [],
+  "author": "Kaiachain",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/kaiachain/kaia-agent-analytics/issues"
+  },
+  "homepage": "https://github.com/kaiachain/kaia-agent-analytics#readme",
+  "dependencies": {
+    "@types/node": "^22.14.1",
+    "dotenv": "^16.5.0",
+    "typescript": "^5.8.3"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2"
+  }
+}
