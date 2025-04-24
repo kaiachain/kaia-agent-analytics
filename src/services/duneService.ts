@@ -8,13 +8,13 @@ if (!duneApiKey) {
 
 const client = new DuneClient(duneApiKey);
 
-async function getLatestResult(queryId: number, limit: number): Promise<string[] | null> {
+async function getLatestResult(queryId: number, limit: number): Promise<string | null> {
     try {
         const response = await client.getLatestResult({ queryId });
         const rows = response.result?.rows;
         if (rows) {
             const lastRows = rows.slice(0, limit);
-            return lastRows.map(row => JSON.stringify(row));
+            return lastRows.map(row => JSON.stringify(row)).join("\n");
         }
         // Log a warning if rows are not found for the given queryId
         console.warn(`No results found or issue with Dune query ID: ${queryId}`);

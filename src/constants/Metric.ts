@@ -6,7 +6,7 @@ export const metrics: Metric[] = [
         queryId: 4711363,
         sectionUrl: "https://dune.com/queries/4711363",
         frequency: "weekly",
-        fromHistoricalDate: "2024-01-01",
+        fromHistoricalDate: "past month",
         limit: 16
     },
     {
@@ -14,7 +14,7 @@ export const metrics: Metric[] = [
         queryId: 4986206,
         sectionUrl: "https://dune.com/queries/4986206/",
         frequency: "weekly",
-        fromHistoricalDate: "2024-01-01",
+        fromHistoricalDate: "past month",
         limit: 8
     },
     {
@@ -22,7 +22,7 @@ export const metrics: Metric[] = [
         queryId: 4966021,
         sectionUrl: "https://dune.com/queries/4966021/",
         frequency: "daily",
-        fromHistoricalDate: "2024-01-01",
+        fromHistoricalDate: "past month",
         limit: 62
     },
     {
@@ -30,7 +30,7 @@ export const metrics: Metric[] = [
         queryId: 4230294,
         sectionUrl: "https://dune.com/queries/4230294",
         frequency: "daily",
-        fromHistoricalDate: "2024-01-01",
+        fromHistoricalDate: "past month",
         limit: 62
     }
 ]
