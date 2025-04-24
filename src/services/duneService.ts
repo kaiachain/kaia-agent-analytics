@@ -12,7 +12,7 @@ async function getLatestResult(queryId: number, limit: number) {
     try {
         const response = await client.getLatestResult({ queryId });
         if (response.result && response.result.rows) {
-            const lastRows = response.result.rows.slice(-limit);
+            const lastRows = response.result.rows.slice(0, limit);
             return lastRows;
         } else {
             return response;

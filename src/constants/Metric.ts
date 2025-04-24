@@ -7,7 +7,7 @@ export const metrics: Metric[] = [
         sectionUrl: "https://dune.com/queries/4711363",
         frequency: "weekly",
         fromHistoricalDate: "2024-01-01",
-        limit: 100
+        limit: 16
     },
     {
         name: "Kaia Weekly Addresses with Non-zero Balance(Over $10 KAIA balance)",
@@ -15,7 +15,7 @@ export const metrics: Metric[] = [
         sectionUrl: "https://dune.com/queries/4986206/",
         frequency: "weekly",
         fromHistoricalDate: "2024-01-01",
-        limit: 10
+        limit: 8
     },
     {
         name: "Kaia Daily Volume",
@@ -23,7 +23,7 @@ export const metrics: Metric[] = [
         sectionUrl: "https://dune.com/queries/4966021/",
         frequency: "daily",
         fromHistoricalDate: "2024-01-01",
-        limit: 60
+        limit: 62
     },
     {
         name: "Kaia - TVL(Including Liquid staking TVL)",
@@ -31,6 +31,6 @@ export const metrics: Metric[] = [
         sectionUrl: "https://dune.com/queries/4230294",
         frequency: "daily",
         fromHistoricalDate: "2024-01-01",
-        limit: 60
+        limit: 62
     }
 ]
