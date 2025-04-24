@@ -6,11 +6,6 @@ import generateContent from "./services/geminiService.ts";
 
 const results = await Promise.all(metrics.map(async metric => {
     const result = await getLatestResult(metric.queryId, metric.limit);
-    // return {
-    //     metricName: metric.name,
-    //     data: result
-    // };
-
 
     const finalPrompt = `
 You are provided with the latest time-series data for the metric: ${metric.name}. Your task is to analyze this data and provide insights in JSON format.
