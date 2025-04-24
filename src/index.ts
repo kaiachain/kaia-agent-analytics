@@ -11,6 +11,7 @@
  * 3. Format and send results to Slack
  */
 import "dotenv/config";
+import cron from 'node-cron';
 import type { Metric, MetricAnalysis } from "./types/index.js";
 import { METRICS } from "./constants/index.js";
 import { getLatestResult, generateContent, sendFormattedSlackMessage } from "./services/index.js";
@@ -129,6 +130,8 @@ async function processMetric(metric: Metric): Promise<MetricAnalysis | Record<st
  */
 async function main(): Promise<void> {
   try {
+    console.log(`Running analytics job at: ${new Date().toISOString()}`);
+    
     // Process all metrics in parallel
     const results = await Promise.all(METRICS.map(processMetric));
     
@@ -141,5 +144,24 @@ async function main(): Promise<void> {
   }
 }
 
-// Execute the main function
+// Get cron schedule from .env file or use default (every monday at 10:00 AM singapore time)
+const cronSchedule = process.env.CRON_SCHEDULE || "0 10 * * 1";
+
+// Check if the cron schedule is valid
+if (!cron.validate(cronSchedule)) {
+  console.error(`Invalid cron schedule: ${cronSchedule}`);
+  console.error("Using default schedule: 0 10 * * 1");
+}
+
+console.log(`Starting Kaia Agent Analytics service with schedule: ${cronSchedule} (Singapore Time)`);
+
+// Schedule the main job with cron - using Singapore Time (UTC+8)
+cron.schedule(cronSchedule, () => {
+  main();
+}, {
+  scheduled: true,
+  timezone: "Asia/Singapore" // Set timezone to Singapore Time
+});
+
+// Also run the job once on startup
 main();

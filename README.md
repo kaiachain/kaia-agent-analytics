@@ -80,12 +80,7 @@ The application fetches relevant metrics from Dune Analytics, processes the data
 
 ### Configuration
 
-1. Create a `.env` file at the root with the following variables:
-   ```
-   DUNE_API_KEY=your_dune_api_key
-   GEMINI_API_KEY=your_gemini_api_key
-   SLACK_WEBHOOK_URL=your_slack_webhook_url
-   ```
+1. Copy `.env.example` and rename it to `.env` and configure the variables.
 
 2. Adjust configuration settings in `src/config/index.ts` if needed
 

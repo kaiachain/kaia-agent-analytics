@@ -54,6 +54,15 @@ export const sendFormattedSlackMessage = async (metricsData: MetricAnalysis[]): 
     for (const metric of metricsData) {
         // Create blocks for each metric with its data
         const metricBlocks = [
+            {
+                type: "context",
+                elements: [
+                    {
+                        type: "mrkdwn",
+                        text: `*Significance:* ${metric.significance}`
+                    }
+                ]
+             },
              {
                 type: "section",
                 text: {
@@ -78,15 +87,6 @@ export const sendFormattedSlackMessage = async (metricsData: MetricAnalysis[]): 
                     text: metric.technicalAnalysis
                 }
             },
-             {
-                type: "context",
-                elements: [
-                    {
-                        type: "mrkdwn",
-                        text: `*Significance:* ${metric.significance}`
-                    }
-                ]
-             },
             {
                 type: "divider"
             }
