@@ -1,6 +1,6 @@
 import "dotenv/config";
 import getLatestResult from "./services/duneService.ts";
-import { metrics } from "./constants/Metric.ts";
+import { metrics } from "./constants/metric.ts";
 import fs from 'fs';
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';

@@ -1,4 +1,4 @@
-import type { Metric } from "../types/Metric.ts";
+import type { Metric } from "../types/metric.ts";
 
 export const metrics: Metric[] = [
     {
