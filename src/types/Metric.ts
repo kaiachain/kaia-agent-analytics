@@ -4,7 +4,7 @@
  * Defines the structure of a metric configuration used for fetching and analyzing data.
  * Each metric represents a specific blockchain analytics data point from Dune.
  */
-export type Metric = {
+export interface Metric {
     /** Display name of the metric shown in reports */
     name: string;
     

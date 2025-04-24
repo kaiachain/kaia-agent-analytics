@@ -4,7 +4,7 @@
  * This file defines the configuration for all metrics tracked by the application.
  * Each metric represents a specific blockchain KPI fetched from Dune Analytics.
  */
-import type { Metric } from "../types/metric.ts";
+import type { Metric } from "../types/index.js";
 
 /**
  * Array of all metrics to be analyzed.
@@ -17,7 +17,7 @@ import type { Metric } from "../types/metric.ts";
  * - fromHistoricalDate: Time period for historical comparison
  * - limit: Number of data points to retrieve
  */
-export const metrics: Metric[] = [
+export const METRICS: Metric[] = [
     {
         name: "Total Revenue",
         queryId: 4711363,

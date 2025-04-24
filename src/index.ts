@@ -11,12 +11,9 @@
  * 3. Format and send results to Slack
  */
 import "dotenv/config";
-import getLatestResult from "./services/duneService.ts";
-import { metrics } from "./constants/metric.ts";
-import generateContent from "./services/geminiService.ts";
-import { sendFormattedSlackMessage } from "./services/slackService.ts";
-import type { Metric } from "./types/metric.ts";
-import type { MetricAnalysis } from "./types/slack.ts";
+import type { Metric, MetricAnalysis } from "./types/index.js";
+import { METRICS } from "./constants/index.js";
+import { getLatestResult, generateContent, sendFormattedSlackMessage } from "./services/index.js";
 
 /**
  * Generates the analysis prompt for a given metric and its data
@@ -133,7 +130,7 @@ async function processMetric(metric: Metric): Promise<MetricAnalysis | Record<st
 async function main(): Promise<void> {
   try {
     // Process all metrics in parallel
-    const results = await Promise.all(metrics.map(processMetric));
+    const results = await Promise.all(METRICS.map(processMetric));
     
     // Send the results to Slack
     await sendFormattedSlackMessage(results as MetricAnalysis[]);
