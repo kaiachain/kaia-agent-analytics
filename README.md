@@ -4,10 +4,6 @@
 
 A Node.js application that automates blockchain metric analysis using AI for the Kaia blockchain ecosystem.
 
-<p align="center">
-  <img src="https://via.placeholder.com/600x300?text=Kaia+Agent+Analytics" alt="Kaia Agent Analytics" width="600">
-</p>
-
 ## 📋 Table of Contents
 
 - [Overview](#overview)
@@ -23,10 +19,12 @@ A Node.js application that automates blockchain metric analysis using AI for the
 - [Development](#development)
   - [Project Structure](#project-structure)
   - [Testing](#testing)
+- [Docker](#docker)
+- [Logging](#logging)
 - [Contributing](#contributing)
 - [License](#license)
 - [Acknowledgements](#acknowledgements)
-- [Logging](#logging)
+
 
 ## 🔍 Overview
 
@@ -153,6 +151,73 @@ Run tests with:
 npm test
 ```
 
+## 🐳 Docker
+
+This application can be run using Docker for easy deployment and environment consistency.
+
+### Using Docker
+
+1. Build the Docker image:
+   ```bash
+   docker build -t kaia-agent-analytics .
+   ```
+
+2. Run the container:
+   ```bash
+   docker run --env-file .env -v ./logs:/app/logs kaia-agent-analytics
+   ```
+
+### Using Docker Compose
+
+1. Create a `.env` file with all required environment variables:
+   ```
+   DUNE_API_KEY=your_dune_api_key_here
+   GEMINI_API_KEY=your_gemini_api_key_here
+   SLACK_WEBHOOK_URL=your_slack_webhook_url_here
+   NODE_ENV=production
+   CRON_SCHEDULE=0 10 * * 1
+   ```
+
+2. Run the application using Docker Compose:
+   ```bash
+   docker-compose up -d
+   ```
+
+3. View logs:
+   ```bash
+   docker-compose logs -f
+   ```
+
+## Logging
+
+The application uses Winston for structured logging with the following features:
+
+- **Log levels**: error, warn, info, http, debug (controlled by NODE_ENV)
+- **Log rotation**: Logs are written to separate files:
+  - `logs/combined.log`: Contains all logs
+  - `logs/error.log`: Contains only error-level logs
+- **Production logs**: In production (NODE_ENV=production), only info-level and above logs are recorded
+- **Development logs**: In development, debug-level logs are also included
+
+### Using the logger
+
+```typescript
+import { logger } from './utils/index.js';
+
+// Different log levels
+logger.error('Critical error occurred', { error: 'details', userId: '123' });
+logger.warn('Warning message', { source: 'function name' });
+logger.info('Regular information', { data: 'some value' });
+logger.debug('Debugging information');
+
+// Log with context using error handler
+import { asyncErrorHandler } from './utils/index.js';
+
+const myFunction = asyncErrorHandler(async () => {
+  // Your code here
+}, 'MyFunctionContext');
+```
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
@@ -172,45 +237,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Dune Analytics](https://dune.com/) for providing the data query platform
 - [Google Gemini AI](https://gemini.google.com/) for powering the analytics
 - [Slack](https://slack.com/) for the messaging platform
-
-## Logging
-
-The application uses Winston for structured logging with the following features:
-
-- **Log levels**: error, warn, info, http, debug (controlled by NODE_ENV)
-- **Log rotation**: Logs are written to separate files:
-  - `logs/combined.log`: Contains all logs
-  - `logs/error.log`: Contains only error-level logs
-- **Production logs**: In production (NODE_ENV=production), only info-level and above logs are recorded
-- **Development logs**: In development, debug-level logs are also included
-
-### Using the logger
-
-```typescript
-import logger from './services/logger';
-
-// Different log levels
-logger.error('Critical error occurred', { error: 'details', userId: '123' });
-logger.warn('Warning message', { source: 'function name' });
-logger.info('Regular information', { data: 'some value' });
-logger.debug('Debugging information');
-
-// Log with context using error handler
-import { asyncErrorHandler } from './services/errorHandler';
-
-const myFunction = asyncErrorHandler(async () => {
-  // Your code here
-}, 'MyFunctionContext');
-```
-
-### Production Build
-
-To create and run a production build with appropriate logging:
-
-```bash
-# Build for production
-npm run build:prod
-
-# Run in production mode
-npm run start:prod
-```
