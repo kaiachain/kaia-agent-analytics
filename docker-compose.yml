@@ -1,0 +1,13 @@
+services:
+  kaia-agent-analytics:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./logs:/app/logs
+    # Environment variables with defaults if not in .env
+    environment:
+      - TZ=${TZ:-Asia/Singapore} 
