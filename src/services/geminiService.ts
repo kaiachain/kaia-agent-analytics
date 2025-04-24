@@ -6,13 +6,16 @@
  */
 import { GoogleGenAI } from "@google/genai";
 import type { GenerateContentParams } from "../types/index.js";
+import { logger, asyncErrorHandler } from "../utils/index.js";
 
 // Get the API key from environment variables
 const geminiApiKey = process.env.GEMINI_API_KEY;
 
 // Validate that the API key is available
 if (!geminiApiKey) {
-  throw new Error("GEMINI_API_KEY environment variable is not set.");
+  const error = new Error("GEMINI_API_KEY environment variable is not set.");
+  logger.error(error.message);
+  throw error;
 }
 
 // Initialize the Gemini client with the API key
@@ -31,13 +34,19 @@ const genAI = new GoogleGenAI({
  * @param options.maxOutputTokens - Maximum tokens to generate (default: 1000)
  * @returns Promise resolving to the generated text or null on error
  */
-async function generateContent({
+const generateContent = asyncErrorHandler(async ({
   modelName,
   prompt,
   systemInstruction,
   temperature = 0.1,
   maxOutputTokens = 1000,
-}: GenerateContentParams): Promise<string | null> {
+}: GenerateContentParams): Promise<string | null> => {
+  logger.info(`Generating content with Gemini model: ${modelName}`, {
+    temperature,
+    maxOutputTokens,
+    promptLength: prompt.length,
+  });
+  
   const response = await genAI.models.generateContent({
     model: modelName,
     contents: prompt,
@@ -49,6 +58,7 @@ async function generateContent({
   });
 
   return response.text ?? null;
-}
+
+}, "Gemini Service");
 
 export default generateContent;

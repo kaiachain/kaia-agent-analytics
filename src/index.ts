@@ -15,6 +15,10 @@ import cron from 'node-cron';
 import type { Metric, MetricAnalysis } from "./types/index.js";
 import { METRICS } from "./constants/index.js";
 import { getLatestResult, generateContent, sendFormattedSlackMessage } from "./services/index.js";
+import { logger, asyncErrorHandler, setupGlobalErrorHandlers } from "./utils/index.js";
+
+// Setup global error handlers
+setupGlobalErrorHandlers();
 
 /**
  * Generates the analysis prompt for a given metric and its data
@@ -66,7 +70,7 @@ ${data}
  */
 function parseGeminiResponse(geminiResult: string | null, metricName: string): MetricAnalysis | Record<string, any> {
   if (typeof geminiResult !== 'string') {
-    console.error(`Received non-string result for metric ${metricName}:`, geminiResult);
+    logger.error(`Received non-string result for metric ${metricName}`, { rawResult: geminiResult });
     return { 
       error: `Received non-string result for metric ${metricName}`, 
       rawResult: geminiResult 
@@ -79,9 +83,11 @@ function parseGeminiResponse(geminiResult: string | null, metricName: string): M
   try {
     return JSON.parse(cleanedResult);
   } catch (error) {
-    console.error(`Failed to parse JSON for metric ${metricName}:`, error);
-    console.error(`Raw Gemini result:`, geminiResult);
-    console.error(`Cleaned Gemini result:`, cleanedResult);
+    logger.error(`Failed to parse JSON for metric ${metricName}`, { 
+      error: error instanceof Error ? error.message : String(error),
+      rawResult: geminiResult,
+      cleanedResult: cleanedResult
+    });
     return { 
       error: `Failed to parse JSON for metric ${metricName}`, 
       rawResult: geminiResult, 
@@ -102,13 +108,17 @@ function parseGeminiResponse(geminiResult: string | null, metricName: string): M
  * @param metric - Metric configuration object
  * @returns Promise resolving to analysis results or error information
  */
-async function processMetric(metric: Metric): Promise<MetricAnalysis | Record<string, any>> {
+const processMetric = asyncErrorHandler(async (metric: Metric): Promise<MetricAnalysis | Record<string, any>> => {
+  logger.info(`Awaiting data from Dune for metric: ${metric.name}`, { metricId: metric.queryId });
+  
   // Fetch the latest data for this metric from Dune
   const data = await getLatestResult(metric.queryId, metric.limit);
   
+  logger.info(`Data fetched from Dune for metric: ${metric.name}`, {});
   // Create the analysis prompt for this metric
   const prompt = createAnalysisPrompt(metric, data);
   
+  logger.info(`Awaiting Gemini response for metric: ${metric.name}`, {metricId: metric.queryId});
   // Generate content analysis using Gemini
   const geminiResult = await generateContent({
     modelName: "gemini-2.0-flash",
@@ -116,9 +126,11 @@ async function processMetric(metric: Metric): Promise<MetricAnalysis | Record<st
     prompt: prompt,
   });
   
+  logger.info(`Received Gemini response for metric: ${metric.name}`);
+  
   // Parse the result and handle any errors
   return parseGeminiResponse(geminiResult, metric.name);
-}
+}, "Metric Processing");
 
 /**
  * Main function to run the analysis and reporting process
@@ -128,32 +140,33 @@ async function processMetric(metric: Metric): Promise<MetricAnalysis | Record<st
  * 2. Sends formatted results to Slack
  * 3. Handles any errors in the process
  */
-async function main(): Promise<void> {
-  try {
-    console.log(`Running analytics job at: ${new Date().toISOString()}`);
-    
-    // Process all metrics in parallel
-    const results = await Promise.all(METRICS.map(processMetric));
-    
-    // Send the results to Slack
-    await sendFormattedSlackMessage(results as MetricAnalysis[]);
-    
-    console.log("Slack message sent successfully");
-  } catch (error) {
-    console.error("Error in main process:", error);
-  }
-}
+const main = asyncErrorHandler(async (): Promise<void> => {
+  logger.info(`Running analytics job`, { timestamp: new Date().toISOString() });
+  
+  // Process all metrics in parallel
+  const results = await Promise.all(METRICS.map(processMetric));
+  
+  // Send the results to Slack
+  await sendFormattedSlackMessage(results as MetricAnalysis[]);
+  
+  logger.info("Slack message sent successfully");
+}, "Main Process");
 
 // Get cron schedule from .env file or use default (every monday at 10:00 AM singapore time)
 const cronSchedule = process.env.CRON_SCHEDULE || "0 10 * * 1";
 
 // Check if the cron schedule is valid
 if (!cron.validate(cronSchedule)) {
-  console.error(`Invalid cron schedule: ${cronSchedule}`);
-  console.error("Using default schedule: 0 10 * * 1");
+  logger.error(`Invalid cron schedule: ${cronSchedule}`, { 
+    usingDefault: true,
+    defaultSchedule: "0 10 * * 1" 
+  });
 }
 
-console.log(`Starting Kaia Agent Analytics service with schedule: ${cronSchedule} (Singapore Time)`);
+logger.info(`Starting Kaia Agent Analytics service`, { 
+  schedule: cronSchedule,
+  timezone: "Asia/Singapore" 
+});
 
 // Schedule the main job with cron - using Singapore Time (UTC+8)
 cron.schedule(cronSchedule, () => {

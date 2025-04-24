@@ -26,6 +26,7 @@ A Node.js application that automates blockchain metric analysis using AI for the
 - [Contributing](#contributing)
 - [License](#license)
 - [Acknowledgements](#acknowledgements)
+- [Logging](#logging)
 
 ## 🔍 Overview
 
@@ -171,3 +172,45 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Dune Analytics](https://dune.com/) for providing the data query platform
 - [Google Gemini AI](https://gemini.google.com/) for powering the analytics
 - [Slack](https://slack.com/) for the messaging platform
+
+## Logging
+
+The application uses Winston for structured logging with the following features:
+
+- **Log levels**: error, warn, info, http, debug (controlled by NODE_ENV)
+- **Log rotation**: Logs are written to separate files:
+  - `logs/combined.log`: Contains all logs
+  - `logs/error.log`: Contains only error-level logs
+- **Production logs**: In production (NODE_ENV=production), only info-level and above logs are recorded
+- **Development logs**: In development, debug-level logs are also included
+
+### Using the logger
+
+```typescript
+import logger from './services/logger';
+
+// Different log levels
+logger.error('Critical error occurred', { error: 'details', userId: '123' });
+logger.warn('Warning message', { source: 'function name' });
+logger.info('Regular information', { data: 'some value' });
+logger.debug('Debugging information');
+
+// Log with context using error handler
+import { asyncErrorHandler } from './services/errorHandler';
+
+const myFunction = asyncErrorHandler(async () => {
+  // Your code here
+}, 'MyFunctionContext');
+```
+
+### Production Build
+
+To create and run a production build with appropriate logging:
+
+```bash
+# Build for production
+npm run build:prod
+
+# Run in production mode
+npm run start:prod
+```
