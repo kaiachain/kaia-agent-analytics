@@ -1,5 +1,22 @@
+/**
+ * Metric Constants
+ * 
+ * This file defines the configuration for all metrics tracked by the application.
+ * Each metric represents a specific blockchain KPI fetched from Dune Analytics.
+ */
 import type { Metric } from "../types/metric.ts";
 
+/**
+ * Array of all metrics to be analyzed.
+ * 
+ * Each metric includes:
+ * - name: Display name
+ * - queryId: Dune Analytics query ID
+ * - sectionUrl: Link to the Dune dashboard section
+ * - frequency: How often the metric is updated
+ * - fromHistoricalDate: Time period for historical comparison
+ * - limit: Number of data points to retrieve
+ */
 export const metrics: Metric[] = [
     {
         name: "Total Revenue",

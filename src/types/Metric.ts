@@ -1,8 +1,25 @@
+/**
+ * Metric Type Definition
+ * 
+ * Defines the structure of a metric configuration used for fetching and analyzing data.
+ * Each metric represents a specific blockchain analytics data point from Dune.
+ */
 export type Metric = {
-    name: string; // Name of the metric
-    queryId: number; // Dune query ID
-    sectionUrl: string; // Dune section URL
-    frequency: "daily" | "weekly" | "monthly" | "yearly"; // Frequency of the metric
-    fromHistoricalDate: string; // Historical date from which to start fetching data
-    limit: number; // Number of rows to fetch
+    /** Display name of the metric shown in reports */
+    name: string;
+    
+    /** Dune Analytics query ID used to fetch data */
+    queryId: number;
+    
+    /** URL to the specific section in Dune dashboard for linking */
+    sectionUrl: string;
+    
+    /** How often the metric is updated/collected */
+    frequency: "daily" | "weekly" | "monthly" | "yearly";
+    
+    /** Human-readable time period for historical data comparison */
+    fromHistoricalDate: string;
+    
+    /** Maximum number of data points to fetch and analyze */
+    limit: number;
 }

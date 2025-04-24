@@ -1,3 +1,15 @@
+/**
+ * Kaia Agent Analytics - Main Entry Point
+ * 
+ * This application fetches blockchain metrics from Dune Analytics,
+ * analyzes the data using Google's Gemini AI model, and sends 
+ * formatted insights to a Slack channel via webhooks.
+ * 
+ * The workflow is:
+ * 1. Fetch latest data for each configured metric from Dune
+ * 2. Generate AI analysis using Gemini
+ * 3. Format and send results to Slack
+ */
 import "dotenv/config";
 import getLatestResult from "./services/duneService.ts";
 import { metrics } from "./constants/metric.ts";
@@ -8,6 +20,10 @@ import type { MetricAnalysis } from "./types/slack.ts";
 
 /**
  * Generates the analysis prompt for a given metric and its data
+ * 
+ * @param metric - Metric configuration object containing metadata
+ * @param data - Raw JSON string data from Dune Analytics
+ * @returns A formatted prompt string for the Gemini AI model
  */
 function createAnalysisPrompt(metric: Metric, data: string | null): string {
   return `
@@ -45,6 +61,10 @@ ${data}
 
 /**
  * Parse the Gemini response and handle potential errors
+ * 
+ * @param geminiResult - Raw response from Gemini API
+ * @param metricName - Name of the metric for error reporting
+ * @returns Parsed MetricAnalysis object or error information
  */
 function parseGeminiResponse(geminiResult: string | null, metricName: string): MetricAnalysis | Record<string, any> {
   if (typeof geminiResult !== 'string') {
@@ -74,6 +94,15 @@ function parseGeminiResponse(geminiResult: string | null, metricName: string): M
 
 /**
  * Process a single metric by fetching data and generating analysis
+ * 
+ * The function pipeline:
+ * 1. Fetches data from Dune Analytics
+ * 2. Creates an analysis prompt
+ * 3. Sends prompt to Gemini AI
+ * 4. Parses and validates the response
+ * 
+ * @param metric - Metric configuration object
+ * @returns Promise resolving to analysis results or error information
  */
 async function processMetric(metric: Metric): Promise<MetricAnalysis | Record<string, any>> {
   // Fetch the latest data for this metric from Dune
@@ -95,6 +124,11 @@ async function processMetric(metric: Metric): Promise<MetricAnalysis | Record<st
 
 /**
  * Main function to run the analysis and reporting process
+ * 
+ * Executes the entire analytics pipeline:
+ * 1. Processes all metrics in parallel for efficiency
+ * 2. Sends formatted results to Slack
+ * 3. Handles any errors in the process
  */
 async function main(): Promise<void> {
   try {

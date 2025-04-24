@@ -1,20 +1,38 @@
+/**
+ * Slack Service
+ * 
+ * Provides functionality to send formatted messages to Slack using Webhooks.
+ * Uses Block Kit to create rich, interactive messages with metric analytics data.
+ */
 import { IncomingWebhook } from '@slack/webhook';
 import { format } from 'date-fns';
 import type { MetricAnalysis } from '../types/slack.js';
 
+// Get the webhook URL from environment variables
 const slackWebhookUrl = process.env.SLACK_WEBHOOK_URL;
 
+// Validate that the webhook URL is available
 if (!slackWebhookUrl) {
-  // Making the error throwing more robust for application stability
   throw new Error("SLACK_WEBHOOK_URL environment variable is not set.");
 }
 
+// Initialize the Slack webhook with the URL
 const webhook = new IncomingWebhook(slackWebhookUrl);
 
 /**
  * Sends formatted metric analysis messages to Slack via Incoming Webhook using Block Kit.
- * The date is sent once at the beginning, followed by blocks for each metric.
- * @param metricsData An array of MetricAnalysis objects.
+ * 
+ * Message structure:
+ * 1. Header with current date/time
+ * 2. A section for each metric including:
+ *    - Metric name with a button linking to Dune
+ *    - Technical analysis text
+ *    - Significance level
+ *    - Divider between metrics
+ * 
+ * @param metricsData - An array of MetricAnalysis objects containing analysis results
+ * @returns Promise that resolves when the message is sent
+ * @throws Error when message sending fails
  */
 export const sendFormattedSlackMessage = async (metricsData: MetricAnalysis[]): Promise<void> => {
   try {
@@ -30,10 +48,11 @@ export const sendFormattedSlackMessage = async (metricsData: MetricAnalysis[]): 
             text: `Date: ${formattedDate}`
         }
     });
-     allBlocks.push({ type: "divider" }); // Add a divider after the date
+    allBlocks.push({ type: "divider" }); // Add a divider after the date
 
     // 2. Loop through metrics and collect their blocks
     for (const metric of metricsData) {
+        // Create blocks for each metric with its data
         const metricBlocks = [
              {
                 type: "section",
