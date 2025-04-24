@@ -154,6 +154,8 @@ const main = asyncErrorHandler(async (): Promise<void> => {
 
 // Get cron schedule from .env file or use default (every monday at 10:00 AM singapore time)
 const cronSchedule = process.env.CRON_SCHEDULE || "0 10 * * 1";
+// Get timezone from .env file or use default (Singapore Time)
+const timezone = process.env.TZ || "Asia/Singapore";
 
 // Check if the cron schedule is valid
 if (!cron.validate(cronSchedule)) {
@@ -165,15 +167,15 @@ if (!cron.validate(cronSchedule)) {
 
 logger.info(`Starting Kaia Agent Analytics service`, { 
   schedule: cronSchedule,
-  timezone: "Asia/Singapore" 
+  timezone: timezone 
 });
 
-// Schedule the main job with cron - using Singapore Time (UTC+8)
+// Schedule the main job with cron using the configured timezone
 cron.schedule(cronSchedule, () => {
   main();
 }, {
   scheduled: true,
-  timezone: "Asia/Singapore" // Set timezone to Singapore Time
+  timezone: timezone // Use configured timezone
 });
 
 // Also run the job once on startup
