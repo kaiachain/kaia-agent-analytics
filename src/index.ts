@@ -1,13 +1,16 @@
-import fs from 'fs';
 import "dotenv/config";
 import getLatestResult from "./services/duneService.ts";
 import { metrics } from "./constants/metric.ts";
 import generateContent from "./services/geminiService.ts";
 import { sendFormattedSlackMessage } from "./services/slackService.ts";
-const results = await Promise.all(metrics.map(async metric => {
-    const result = await getLatestResult(metric.queryId, metric.limit);
+import type { Metric } from "./types/metric.ts";
+import type { MetricAnalysis } from "./types/slack.ts";
 
-    const finalPrompt = `
+/**
+ * Generates the analysis prompt for a given metric and its data
+ */
+function createAnalysisPrompt(metric: Metric, data: string | null): string {
+  return `
 You are provided with the latest time-series data for the metric: ${metric.name}. Your task is to analyze this data and provide insights in JSON format.
 
 Follow these steps:
@@ -36,35 +39,76 @@ Output your response strictly in the following JSON format:
 }
     
 Here is the data:
-${result}
+${data}
 `;
+}
 
-    const geminiResult = await generateContent({
-        modelName: "gemini-2.0-flash",
-        systemInstruction: "You are an expert AI blockchain data analyst. Your knowledge includes all standard data analysis techniques and deep expertise in blockchain ecosystems. You excel at retrieving data from Dune Analytics and performing technical analysis on it. Focus on providing accurate, data-driven blockchain insights based on Dune Analytics data.",
-        prompt: finalPrompt,
-    });
-    // Parse the JSON string returned by Gemini into a JavaScript object
-    if (typeof geminiResult === 'string') {
-        // Clean the string: remove markdown fences and trim whitespace
-        const cleanedResult = geminiResult.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
-        try {
-            return JSON.parse(cleanedResult);
-        } catch (error) {
-            console.error(`Failed to parse JSON for metric ${metric.name}:`, error);
-            console.error(`Raw Gemini result:`, geminiResult);
-            console.error(`Cleaned Gemini result:`, cleanedResult);
-            // Return an error object, so Promise.all doesn't fail completely
-            return { error: `Failed to parse JSON for metric ${metric.name}`, rawResult: geminiResult, cleanedResult: cleanedResult };
-        }
-    } else {
-        console.error(`Received non-string result for metric ${metric.name}:`, geminiResult);
-        // Return an error object if the result is not a string
-        return { error: `Received non-string result for metric ${metric.name}`, rawResult: geminiResult };
-    }
-}));
+/**
+ * Parse the Gemini response and handle potential errors
+ */
+function parseGeminiResponse(geminiResult: string | null, metricName: string): MetricAnalysis | Record<string, any> {
+  if (typeof geminiResult !== 'string') {
+    console.error(`Received non-string result for metric ${metricName}:`, geminiResult);
+    return { 
+      error: `Received non-string result for metric ${metricName}`, 
+      rawResult: geminiResult 
+    };
+  }
+  
+  // Clean the string: remove markdown fences and trim whitespace
+  const cleanedResult = geminiResult.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
+  
+  try {
+    return JSON.parse(cleanedResult);
+  } catch (error) {
+    console.error(`Failed to parse JSON for metric ${metricName}:`, error);
+    console.error(`Raw Gemini result:`, geminiResult);
+    console.error(`Cleaned Gemini result:`, cleanedResult);
+    return { 
+      error: `Failed to parse JSON for metric ${metricName}`, 
+      rawResult: geminiResult, 
+      cleanedResult: cleanedResult 
+    };
+  }
+}
 
-// Send the results to Slack
-await sendFormattedSlackMessage(results);
+/**
+ * Process a single metric by fetching data and generating analysis
+ */
+async function processMetric(metric: Metric): Promise<MetricAnalysis | Record<string, any>> {
+  // Fetch the latest data for this metric from Dune
+  const data = await getLatestResult(metric.queryId, metric.limit);
+  
+  // Create the analysis prompt for this metric
+  const prompt = createAnalysisPrompt(metric, data);
+  
+  // Generate content analysis using Gemini
+  const geminiResult = await generateContent({
+    modelName: "gemini-2.0-flash",
+    systemInstruction: "You are an expert AI blockchain data analyst. Your knowledge includes all standard data analysis techniques and deep expertise in blockchain ecosystems. You excel at retrieving data from Dune Analytics and performing technical analysis on it. Focus on providing accurate, data-driven blockchain insights based on Dune Analytics data.",
+    prompt: prompt,
+  });
+  
+  // Parse the result and handle any errors
+  return parseGeminiResponse(geminiResult, metric.name);
+}
 
-console.log("Slack message sent successfully");
+/**
+ * Main function to run the analysis and reporting process
+ */
+async function main(): Promise<void> {
+  try {
+    // Process all metrics in parallel
+    const results = await Promise.all(metrics.map(processMetric));
+    
+    // Send the results to Slack
+    await sendFormattedSlackMessage(results as MetricAnalysis[]);
+    
+    console.log("Slack message sent successfully");
+  } catch (error) {
+    console.error("Error in main process:", error);
+  }
+}
+
+// Execute the main function
+main();
