@@ -3,7 +3,7 @@ import "dotenv/config";
 import getLatestResult from "./services/duneService.ts";
 import { metrics } from "./constants/metric.ts";
 import generateContent from "./services/geminiService.ts";
-
+import { sendFormattedSlackMessage } from "./services/slackService.ts";
 const results = await Promise.all(metrics.map(async metric => {
     const result = await getLatestResult(metric.queryId, metric.limit);
 
@@ -64,8 +64,7 @@ ${result}
     }
 }));
 
-console.log(results);
-// create json file with the results
-fs.writeFileSync("results.json", JSON.stringify(results, null, 2));
+// Send the results to Slack
+await sendFormattedSlackMessage(results);
 
-    
+console.log("Slack message sent successfully");
