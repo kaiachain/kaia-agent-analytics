@@ -9,8 +9,8 @@ const levels = {
   debug: 4,
 };
 
-// Define level based on environment
-const level = process.env.NODE_ENV === 'production' ? 'info' : 'debug';
+// Define level based on environment - default to production if not specified
+const level = (process.env.NODE_ENV && process.env.NODE_ENV.toLowerCase() !== 'production') ? 'debug' : 'info';
 
 // Define colors for each level
 const colors = {
@@ -67,4 +67,4 @@ const logger = createLogger({
   transports: transportsLogger,
 });
 
-export default logger; 
+export default logger;

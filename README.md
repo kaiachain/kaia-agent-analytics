@@ -193,11 +193,32 @@ This application can be run using Docker for easy deployment and environment con
 The application uses Winston for structured logging with the following features:
 
 - **Log levels**: error, warn, info, http, debug (controlled by NODE_ENV)
+- **Environment configuration**:
+  - **Production mode** (default): Only shows info-level and above logs
+  - **Development mode**: Shows all logs including debug-level for detailed troubleshooting
 - **Log rotation**: Logs are written to separate files:
   - `logs/combined.log`: Contains all logs
   - `logs/error.log`: Contains only error-level logs
-- **Production logs**: In production (NODE_ENV=production), only info-level and above logs are recorded
-- **Development logs**: In development, debug-level logs are also included
+
+### Environment Configuration
+
+By default, the application runs in production mode with minimal logging. The environment is controlled by the NODE_ENV variable:
+
+```bash
+# Production mode (default if not specified)
+# Shows only info, warn, and error logs
+NODE_ENV=production npm start
+
+# Development mode
+# Shows all logs including debug messages
+NODE_ENV=development npm start
+```
+
+You can also specify NODE_ENV in your .env file, but it's completely optional:
+```
+# Optional: Set only if you need development mode with extra debug logs
+NODE_ENV=development
+```
 
 ### Using the logger
 

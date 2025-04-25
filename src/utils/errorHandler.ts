@@ -42,9 +42,9 @@ export const setupGlobalErrorHandlers = () => {
   // Handle uncaught exceptions
   process.on('uncaughtException', (error) => {
     handleError(error, 'Uncaught Exception');
-    // In production, you might want to gracefully shut down
-    if (process.env.NODE_ENV === 'production') {
-      process.exit(1); // Exit with error
+    // Exit with error in production mode or if not explicitly set to development
+    if (!process.env.NODE_ENV || process.env.NODE_ENV.toLowerCase() === 'production') {
+      process.exit(1);
     }
   });
 
@@ -62,4 +62,4 @@ export default {
   handleError,
   asyncErrorHandler,
   setupGlobalErrorHandlers,
-}; 
+};
