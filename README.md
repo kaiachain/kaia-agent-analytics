@@ -13,6 +13,9 @@ A Node.js application that automates blockchain metric analysis using AI for the
   - [Installation](#installation)
   - [Configuration](#configuration)
 - [Usage](#usage)
+- [Scheduling](#scheduling)
+  - [Cron Configuration](#cron-configuration)
+  - [Single Run Mode](#single-run-mode)
 - [Customization](#customization)
   - [Adding New Metrics](#adding-new-metrics)
   - [Modifying Report Format](#modifying-report-format)
@@ -110,6 +113,48 @@ npm run build
 
 Run the built application:
 ```bash
+npm start
+```
+
+## 🕒 Scheduling
+
+Kaia Agent Analytics supports flexible scheduling options to fit your workflow needs.
+
+### Cron Configuration
+
+The application uses node-cron for scheduled execution:
+
+1. Set the `CRON_SCHEDULE` environment variable in your `.env` file:
+   ```
+   # Run every Monday at 10:00 AM
+   CRON_SCHEDULE=0 10 * * 1
+   
+   # Run daily at midnight
+   # CRON_SCHEDULE=0 0 * * *
+   
+   # Run every hour
+   # CRON_SCHEDULE=0 * * * *
+   ```
+
+2. Optionally, set the timezone for the cron schedule:
+   ```
+   # Default: Asia/Singapore
+   TZ=Asia/Singapore
+   ```
+
+For cron syntax reference, visit [node-cron documentation](https://www.npmjs.com/package/node-cron).
+
+### Single Run Mode
+
+If no cron schedule is provided, the application will run immediately and exit:
+
+- This is useful for one-time reports or testing
+- Perfect for CI/CD pipelines or scheduled tasks managed by an external system
+- To use: simply leave `CRON_SCHEDULE` unset in your environment variables
+
+Example for single run mode:
+```bash
+# Without cron (runs once immediately then exits)
 npm start
 ```
 

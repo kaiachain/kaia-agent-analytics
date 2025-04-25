@@ -18,6 +18,23 @@ TZ=Asia/Singapore          # Timezone for cron scheduling
 DEBUG_LOGS=false           # Set to 'true' to enable detailed debug logging
 ```
 
+## Scheduling Behavior
+
+The application has two operating modes:
+
+1. **Scheduled Mode**: When `CRON_SCHEDULE` is set, the container will keep running and execute the analytics job according to the schedule.
+
+2. **Single Run Mode**: If `CRON_SCHEDULE` is not set, the container will execute the analytics job once and then exit. This is useful for running the job from an external scheduler like Kubernetes CronJobs.
+
+**Examples:**
+```
+# For scheduled mode (container keeps running)
+CRON_SCHEDULE=0 10 * * 1
+
+# For single run mode (runs once and exits)
+# Simply leave CRON_SCHEDULE unset
+```
+
 ## Building and Running with Docker
 
 ### Option 1: Using Docker Directly
