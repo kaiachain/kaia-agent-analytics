@@ -29,19 +29,19 @@
     "@duneanalytics/client-sdk": "^0.2.5",
     "@google/genai": "^0.10.0",
     "@slack/webhook": "^7.0.5",
-    "@types/node": "^22.14.1",
-    "@types/node-cron": "^3.0.11",
     "date-fns": "^4.1.0",
     "dotenv": "^16.5.0",
     "node-cron": "^3.0.3",
-    "typescript": "^5.8.3",
     "winston": "^3.17.0"
   },
   "devDependencies": {
     "@tsconfig/node20": "^20.1.5",
+    "@types/node": "^22.14.1",
+    "@types/node-cron": "^3.0.11",
     "ts-node": "^10.9.2",
     "tslib": "^2.8.1",
     "tsup": "^8.4.0",
-    "tsx": "^4.19.3"
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3"
   }
 }
