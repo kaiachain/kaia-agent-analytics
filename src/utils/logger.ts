@@ -43,6 +43,9 @@ const transportsLogger = [
       formatLogger
     ),
   }),
+
+  // NOTE: Uncomment to save logs to files
+  /* 
   // Store all logs in combined.log
   new transports.File({
     filename: path.join('logs', 'combined.log'),
@@ -54,6 +57,7 @@ const transportsLogger = [
     level: 'error',
     format: formatLogger,
   }),
+  */
 ];
 
 // Create the logger

@@ -30,12 +30,5 @@ RUN npm ci --omit=dev
 # Copy built files from builder stage
 COPY --from=builder /build/dist ./dist
 
-# Set environment variables
-ENV NODE_ENV=production
-ENV TZ=${TZ:-Asia/Singapore}
-
-# Expose any needed ports (if applicable)
-# EXPOSE 3000
-
 # Run the application
 CMD ["npm", "start"] 

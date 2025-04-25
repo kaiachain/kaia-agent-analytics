@@ -6,8 +6,7 @@ services:
     restart: unless-stopped
     env_file:
       - .env
-    volumes:
-      - ./logs:/app/logs
-    # Environment variables with defaults if not in .env
-    environment:
-      - TZ=${TZ:-Asia/Singapore} 
+    # NOTE: Uncomment to show logs to files (only if it is enabled in logger.ts)
+    # volumes:
+      # Logs volume not needed as file logging has been disabled
+      # - ./logs:/app/logs
