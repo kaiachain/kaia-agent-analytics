@@ -5,8 +5,8 @@
  * This service is used for analyzing blockchain metric data and generating insights.
  */
 import { GoogleGenAI } from "@google/genai";
-import type { GenerateContentParams } from "../types/index";
-import { logger, asyncErrorHandler } from "../utils/index";
+import type { GenerateContentParams } from "../types";
+import { logger, asyncErrorHandler } from "../utils";
 
 // Get the API key from environment variables
 const geminiApiKey = process.env.GEMINI_API_KEY;

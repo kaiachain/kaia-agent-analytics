@@ -6,8 +6,8 @@
  */
 import { IncomingWebhook } from '@slack/webhook';
 import { format } from 'date-fns';
-import type { MetricAnalysis } from '../types/index';
-import { logger, asyncErrorHandler } from '../utils/index';
+import type { MetricAnalysis } from '../types';
+import { logger, asyncErrorHandler } from '../utils';
 
 // Get the webhook URL from environment variables
 const slackWebhookUrl = process.env.SLACK_WEBHOOK_URL;

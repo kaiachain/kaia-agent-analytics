@@ -1,5 +1,4 @@
 import { createLogger, format, transports } from 'winston';
-import path from 'path';
 
 // Define log levels
 const levels = {
