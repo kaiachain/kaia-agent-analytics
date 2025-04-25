@@ -36,8 +36,9 @@ docker run --env-file .env -v ./logs:/app/logs kaia-agent-analytics
 # Start the service
 npm run docker:up
 
+# NOTE: Uncomment to show logs to files (only if it is enabled in logger.ts)
 # View logs
-npm run docker:log
+# npm run docker:log
 
 # Stop the service
 npm run docker:down

@@ -175,7 +175,7 @@ This application can be run using Docker for easy deployment and environment con
    GEMINI_API_KEY=your_gemini_api_key_here
    SLACK_WEBHOOK_URL=your_slack_webhook_url_here
    NODE_ENV=production
-   CRON_SCHEDULE=0 10 * * 1
+   CRON_SCHEDULE=your_cron_schedule
    ```
 
 2. Run the application using Docker Compose:
