@@ -1,5 +1,4 @@
 import { createLogger, format, transports } from 'winston';
-import path from 'path';
 
 // Define log levels
 const levels = {
@@ -10,8 +9,10 @@ const levels = {
   debug: 4,
 };
 
-// Define level based on environment
-const level = process.env.NODE_ENV === 'production' ? 'info' : 'debug';
+// Define level based on DEBUG_LOGS environment variable
+// If DEBUG_LOGS is 'true', show all logs including debug level
+// Otherwise, only show info, warn, and error logs
+const level = process.env.DEBUG_LOGS?.toLowerCase() === 'true' ? 'debug' : 'info';
 
 // Define colors for each level
 const colors = {
@@ -68,4 +69,4 @@ const logger = createLogger({
   transports: transportsLogger,
 });
 
-export default logger; 
+export default logger;

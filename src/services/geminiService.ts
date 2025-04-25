@@ -5,8 +5,8 @@
  * This service is used for analyzing blockchain metric data and generating insights.
  */
 import { GoogleGenAI } from "@google/genai";
-import type { GenerateContentParams } from "../types/index";
-import { logger, asyncErrorHandler } from "../utils/index";
+import type { GenerateContentParams } from "../types";
+import { logger, asyncErrorHandler } from "../utils";
 
 // Get the API key from environment variables
 const geminiApiKey = process.env.GEMINI_API_KEY;
@@ -21,6 +21,11 @@ if (!geminiApiKey) {
 // Initialize the Gemini client with the API key
 const genAI = new GoogleGenAI({
   apiKey: geminiApiKey
+});
+
+logger.debug('Gemini AI client initialized', {
+  apiKeyProvided: !!geminiApiKey,
+  apiKeyLength: geminiApiKey?.length || 0
 });
 
 /**
@@ -47,6 +52,16 @@ const generateContent = asyncErrorHandler(async ({
     promptLength: prompt.length,
   });
   
+  logger.debug('Detailed Gemini request parameters', {
+    modelName,
+    temperature,
+    maxOutputTokens,
+    promptLength: prompt.length,
+    systemInstructionLength: systemInstruction.length,
+    firstPromptChars: prompt.substring(0, 100) + '...'
+  });
+  
+  const startTime = Date.now();
   const response = await genAI.models.generateContent({
     model: modelName,
     contents: prompt,
@@ -56,8 +71,18 @@ const generateContent = asyncErrorHandler(async ({
       maxOutputTokens: maxOutputTokens,
     },
   });
+  const requestTime = Date.now() - startTime;
+  
+  const responseText = response.text ?? null;
+  
+  logger.debug('Gemini response details', {
+    requestTime: `${requestTime}ms`,
+    responseLength: responseText?.length || 0,
+    hasResponse: !!responseText,
+    responsePreview: responseText ? responseText.substring(0, 100) + '...' : 'No response'
+  });
 
-  return response.text ?? null;
+  return responseText;
 
 }, "Gemini Service");
 

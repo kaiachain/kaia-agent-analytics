@@ -5,7 +5,7 @@
  * Uses the official Dune Analytics Client SDK to retrieve query results.
  */
 import { DuneClient } from "@duneanalytics/client-sdk";
-import { logger, asyncErrorHandler } from "../utils/index";
+import { logger, asyncErrorHandler } from "../utils";
 
 // Get the API key from environment variables
 const duneApiKey = process.env.DUNE_API_KEY;
@@ -20,6 +20,11 @@ if (!duneApiKey) {
 // Initialize the Dune client with the API key
 const client = new DuneClient(duneApiKey);
 
+logger.debug('Dune Analytics client initialized', {
+    apiKeyProvided: !!duneApiKey,
+    apiKeyLength: duneApiKey?.length || 0
+});
+
 /**
  * Fetches the latest result for a specific Dune query
  * 
@@ -28,13 +33,32 @@ const client = new DuneClient(duneApiKey);
  * @returns Promise resolving to a formatted string of data rows or null on error
  */
 const getLatestResult = asyncErrorHandler(async (queryId: number, limit: number): Promise<string | null> => {
+    logger.debug(`Fetching latest result from Dune Analytics`, {
+        queryId,
+        limit
+    });
+    
     // Fetch the latest result from Dune
+    const startTime = Date.now();
     const response = await client.getLatestResult({ queryId });
+    const fetchTime = Date.now() - startTime;
     const rows = response.result?.rows;
+    
+    logger.debug(`Dune Analytics response received`, {
+        queryId,
+        responseTime: `${fetchTime}ms`,
+        rowsCount: rows?.length || 0,
+        executionId: response.execution_id
+    });
     
     if (rows) {
         // Take only the requested number of rows and convert to string format
         const lastRows = rows.slice(0, limit);
+        logger.debug(`Processing Dune data`, {
+            totalRows: rows.length,
+            limitedRows: lastRows.length,
+            limitApplied: rows.length > limit
+        });
         return lastRows.map(row => JSON.stringify(row)).join("\n");
     }
     

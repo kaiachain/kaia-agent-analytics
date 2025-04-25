@@ -32,4 +32,4 @@ RUN npm ci --omit=dev
 COPY --from=builder /build/dist ./dist
 
 # Run the application
-CMD ["npm", "start"] 
+CMD ["npm", "start"]

@@ -6,8 +6,8 @@
  */
 import { IncomingWebhook } from '@slack/webhook';
 import { format } from 'date-fns';
-import type { MetricAnalysis } from '../types/index';
-import { logger, asyncErrorHandler } from '../utils/index';
+import type { MetricAnalysis } from '../types';
+import { logger, asyncErrorHandler } from '../utils';
 
 // Get the webhook URL from environment variables
 const slackWebhookUrl = process.env.SLACK_WEBHOOK_URL;
@@ -21,6 +21,11 @@ if (!slackWebhookUrl) {
 
 // Initialize the Slack webhook with the URL
 const webhook = new IncomingWebhook(slackWebhookUrl);
+
+logger.debug('Slack webhook initialized', {
+  webhookUrlProvided: !!slackWebhookUrl,
+  webhookUrlLength: slackWebhookUrl?.length || 0
+});
 
 /**
  * Sends formatted metric analysis messages to Slack via Incoming Webhook using Block Kit.
@@ -39,6 +44,11 @@ const webhook = new IncomingWebhook(slackWebhookUrl);
  */
 export const sendFormattedSlackMessage = asyncErrorHandler(async (metricsData: MetricAnalysis[]): Promise<void> => {
   logger.info(`Preparing to send metric analysis to Slack`, { metricCount: metricsData.length });
+  logger.debug('Slack message metrics details', {
+    metricsCount: metricsData.length,
+    metricNames: metricsData.map(m => m.metricName),
+    significanceLevels: metricsData.map(m => m.significance)
+  });
   
   const allBlocks: any[] = []; // Initialize array to hold all blocks
 
@@ -53,10 +63,19 @@ export const sendFormattedSlackMessage = asyncErrorHandler(async (metricsData: M
       }
   });
   allBlocks.push({ type: "divider" }); // Add a divider after the date
+  
+  logger.debug('Added date header to Slack message', { formattedDate });
 
   // 2. Loop through metrics and collect their blocks
   for (const metric of metricsData) {
       logger.info(`Building Slack blocks for metric: ${metric.metricName}`, { significance: metric.significance });
+      logger.debug('Building blocks for metric', {
+        metricName: metric.metricName,
+        significance: metric.significance,
+        latestValue: metric.latestValue,
+        absoluteChange: metric.absoluteChange,
+        percentageChange: metric.percentageChange
+      });
       
       // Create blocks for each metric with its data
       const metricBlocks = [
@@ -98,6 +117,8 @@ export const sendFormattedSlackMessage = asyncErrorHandler(async (metricsData: M
           }
       ];
       allBlocks.push(...metricBlocks); // Add metric-specific blocks to the main array
+      
+      logger.debug(`Added ${metricBlocks.length} blocks for metric: ${metric.metricName}`);
   }
 
   // 3. Construct the final payload and send ONCE
@@ -107,6 +128,10 @@ export const sendFormattedSlackMessage = asyncErrorHandler(async (metricsData: M
       };
       
       logger.info(`Sending Slack message with ${metricsData.length} metrics`);
+      logger.debug('Slack payload details', {
+        totalBlocks: allBlocks.length,
+        payloadSize: JSON.stringify(payload).length
+      });
       
       const startTime = Date.now();
       await webhook.send(payload);
@@ -116,7 +141,15 @@ export const sendFormattedSlackMessage = asyncErrorHandler(async (metricsData: M
         duration: `${duration}ms`,
         blockCount: allBlocks.length 
       });
+      logger.debug('Slack message sent successfully', {
+        responseTime: `${duration}ms`,
+        timestamp: new Date().toISOString()
+      });
   } else {
       logger.warn("No metrics data provided to send to Slack");
+      logger.debug('Empty metrics data, not sending Slack message', {
+        allBlocksLength: allBlocks.length,
+        metricsDataLength: metricsData.length
+      });
   }
 }, "Slack Service");

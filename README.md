@@ -13,12 +13,15 @@ A Node.js application that automates blockchain metric analysis using AI for the
   - [Installation](#installation)
   - [Configuration](#configuration)
 - [Usage](#usage)
+- [Scheduling](#scheduling)
+  - [Cron Configuration](#cron-configuration)
+  - [Single Run Mode](#single-run-mode)
 - [Customization](#customization)
   - [Adding New Metrics](#adding-new-metrics)
   - [Modifying Report Format](#modifying-report-format)
 - [Development](#development)
   - [Project Structure](#project-structure)
-  - [Testing](#testing)
+  - [Error Handling](#error-handling)
 - [Docker](#docker)
 - [Logging](#logging)
 - [Contributing](#contributing)
@@ -37,7 +40,7 @@ The application fetches relevant metrics from Dune Analytics, processes the data
 - **Automated Data Collection**
   - Scheduled fetching of blockchain metrics from Dune Analytics
   - Configurable query parameters and time ranges
-  - Caching mechanism to optimize API usage
+  - Efficient API usage with robust error handling
 
 - **AI-Powered Analysis**
   - Trend identification using Google's Gemini AI model
@@ -58,7 +61,7 @@ The application fetches relevant metrics from Dune Analytics, processes the data
 
 ### Prerequisites
 
-- Node.js 18+ and npm
+- Node.js 20+ and npm (project includes an `.nvmrc` file)
 - API keys for:
   - Dune Analytics
   - Google Gemini AI
@@ -79,9 +82,22 @@ The application fetches relevant metrics from Dune Analytics, processes the data
 
 ### Configuration
 
-1. Copy `.env.example` and rename it to `.env` and configure the variables.
+1. Copy `.env.example` and rename it to `.env`:
+   ```bash
+   cp .env.example .env
+   ```
 
-2. Adjust configuration settings in `src/config/index.ts` if needed
+2. Configure the required environment variables in the `.env` file:
+   ```
+   # Required API Keys
+   DUNE_API_KEY=your_dune_api_key_here
+   GEMINI_API_KEY=your_gemini_api_key_here
+   SLACK_WEBHOOK_URL=your_slack_webhook_url_here
+   
+   # Optional Configuration
+   CRON_SCHEDULE=0 10 * * 1  # Run every Monday at 10:00 AM
+   TZ=Asia/Singapore         # Timezone for cron scheduling
+   ```
 
 ## 📊 Usage
 
@@ -100,6 +116,48 @@ Run the built application:
 npm start
 ```
 
+## 🕒 Scheduling
+
+Kaia Agent Analytics supports flexible scheduling options to fit your workflow needs.
+
+### Cron Configuration
+
+The application uses node-cron for scheduled execution:
+
+1. Set the `CRON_SCHEDULE` environment variable in your `.env` file:
+   ```
+   # Run every Monday at 10:00 AM
+   CRON_SCHEDULE=0 10 * * 1
+   
+   # Run daily at midnight
+   # CRON_SCHEDULE=0 0 * * *
+   
+   # Run every hour
+   # CRON_SCHEDULE=0 * * * *
+   ```
+
+2. Optionally, set the timezone for the cron schedule:
+   ```
+   # Default: Asia/Singapore
+   TZ=Asia/Singapore
+   ```
+
+For cron syntax reference, visit [node-cron documentation](https://www.npmjs.com/package/node-cron).
+
+### Single Run Mode
+
+If no cron schedule is provided, the application will run immediately and exit:
+
+- This is useful for one-time reports or testing
+- Perfect for CI/CD pipelines or scheduled tasks managed by an external system
+- To use: simply leave `CRON_SCHEDULE` unset in your environment variables
+
+Example for single run mode:
+```bash
+# Without cron (runs once immediately then exits)
+npm start
+```
+
 ## ⚙️ Customization
 
 ### Adding New Metrics
@@ -107,23 +165,24 @@ npm start
 To add a new metric for tracking:
 
 1. Open `src/constants/metric.ts`
-2. Add a new entry to the `metrics` array:
+2. Add a new entry to the `METRICS` array:
    ```typescript
    {
-     id: 'unique_metric_id',
-     name: 'Human-Readable Metric Name',
-     duneQueryId: '123456',
-     description: 'Brief description of what this metric represents',
-     importance: 'Why this metric matters for the ecosystem'
+     name: "Your Metric Name",
+     queryId: 123456,  // Dune Analytics query ID
+     sectionUrl: "https://dune.com/queries/123456",
+     frequency: "daily", // or "weekly", "monthly", "yearly"
+     fromHistoricalDate: "past month",
+     limit: 30 // Number of data points to retrieve
    }
    ```
-
+   
 ### Modifying Report Format
 
 To customize how reports are displayed in Slack:
 
-1. Navigate to `src/services/slack.ts`
-2. Modify the message formatting templates to suit your needs
+1. Navigate to `src/services/slackService.ts`
+2. Modify the message formatting templates in the `sendFormattedSlackMessage` function
 
 ## 💻 Development
 
@@ -132,23 +191,36 @@ To customize how reports are displayed in Slack:
 ```
 kaia-agent-analytics/
 ├── src/
-│   ├── config/       # Application configuration
-│   ├── constants/    # Constant values used across the app
-│   ├── services/     # Core service implementations
+│   ├── constants/    # Metric configurations and other constant values
+│   ├── services/     # Core service implementations (Dune, Gemini, Slack)
 │   ├── types/        # TypeScript type definitions
-│   ├── utils/        # Utility functions
+│   ├── utils/        # Logging and error handling utilities
 │   └── index.ts      # Application entry point
-├── tests/            # Test files
-├── .env              # Environment variables (git-ignored)
+├── .env.example      # Example environment variables
+├── .nvmrc            # Node version specification
+├── Dockerfile        # Container definition
+├── docker-compose.yml # Docker Compose configuration
 ├── package.json      # Project dependencies and scripts
 └── tsconfig.json     # TypeScript configuration
 ```
 
-### Testing
+### Error Handling
 
-Run tests with:
-```bash
-npm test
+The application incorporates a robust error handling system:
+
+- **Async Error Handler**: A wrapper for async functions that catches and logs errors with context
+- **Global Error Handlers**: Process-level handlers for uncaught exceptions and unhandled rejections
+- **Contextual Logging**: All errors are logged with their context and stack traces for easier debugging
+
+Example of using the error handler in your own code:
+
+```typescript
+import { asyncErrorHandler } from './utils';
+
+const myFunction = asyncErrorHandler(async () => {
+  // Your code here
+  // Any errors will be caught, logged, and re-thrown
+}, 'MyFunctionContext');
 ```
 
 ## 🐳 Docker
@@ -164,58 +236,64 @@ This application can be run using Docker for easy deployment and environment con
 
 2. Run the container:
    ```bash
-   docker run --env-file .env -v ./logs:/app/logs kaia-agent-analytics
+   docker run --env-file .env kaia-agent-analytics
    ```
 
 ### Using Docker Compose
 
-1. Create a `.env` file with all required environment variables:
-   ```
-   DUNE_API_KEY=your_dune_api_key_here
-   GEMINI_API_KEY=your_gemini_api_key_here
-   SLACK_WEBHOOK_URL=your_slack_webhook_url_here
-   NODE_ENV=production
-   CRON_SCHEDULE=your_cron_schedule
-   ```
+1. Ensure your `.env` file is configured with all required environment variables
 
 2. Run the application using Docker Compose:
    ```bash
-   docker-compose up -d
+   npm run docker:up
    ```
 
-3. View logs:
+3. Stop the container:
    ```bash
-   docker-compose logs -f
+   npm run docker:down
    ```
 
-## Logging
+For more detailed Docker setup instructions, see [DOCKER.md](DOCKER.md).
+
+## 📝 Logging
 
 The application uses Winston for structured logging with the following features:
 
-- **Log levels**: error, warn, info, http, debug (controlled by NODE_ENV)
-- **Log rotation**: Logs are written to separate files:
-  - `logs/combined.log`: Contains all logs
-  - `logs/error.log`: Contains only error-level logs
-- **Production logs**: In production (NODE_ENV=production), only info-level and above logs are recorded
-- **Development logs**: In development, debug-level logs are also included
+- **Log levels**: error, warn, info, http, debug
+- **Environment configuration**:
+  - **Regular mode** (default): Only shows info-level and above logs (info, warn, error)
+  - **Debug mode**: Shows all logs including verbose debug-level logs for detailed troubleshooting
+
+> **Note**: The file logging functionality (logs/combined.log and logs/error.log) is included in the code but is commented out by default. To enable file logging, uncomment the relevant section in `src/utils/logger.ts`.
+
+### Controlling Debug Logs
+
+You can control the logging level with the `DEBUG_LOGS` environment variable:
+
+```bash
+# Regular mode (default if not specified)
+# Shows only info, warn, and error logs
+DEBUG_LOGS=false npm start
+
+# Debug mode
+# Shows all logs including detailed debug messages
+DEBUG_LOGS=true npm start
+
+# Using npm scripts with debug logs enabled
+npm run dev          # For development with debug logs
+npm run start:debug  # For production build with debug logs
+```
 
 ### Using the logger
 
 ```typescript
-import { logger } from './utils/index';
+import { logger } from './utils';
 
 // Different log levels
 logger.error('Critical error occurred', { error: 'details', userId: '123' });
 logger.warn('Warning message', { source: 'function name' });
 logger.info('Regular information', { data: 'some value' });
-logger.debug('Debugging information');
-
-// Log with context using error handler
-import { asyncErrorHandler } from './utils/index';
-
-const myFunction = asyncErrorHandler(async () => {
-  // Your code here
-}, 'MyFunctionContext');
+logger.debug('Debugging information - only shown when DEBUG_LOGS=true');
 ```
 
 ## 🤝 Contributing
