@@ -12,10 +12,10 @@
  */
 import "dotenv/config";
 import cron from 'node-cron';
-import type { Metric, MetricAnalysis } from "./types/index.js";
-import { METRICS } from "./constants/index.js";
-import { getLatestResult, generateContent, sendFormattedSlackMessage } from "./services/index.js";
-import { logger, asyncErrorHandler, setupGlobalErrorHandlers } from "./utils/index.js";
+import type { Metric, MetricAnalysis } from "./types/index";
+import { METRICS } from "./constants/index";
+import { getLatestResult, generateContent, sendFormattedSlackMessage } from "./services/index";
+import { logger, asyncErrorHandler, setupGlobalErrorHandlers } from "./utils/index";
 
 // Setup global error handlers
 setupGlobalErrorHandlers();

@@ -202,7 +202,7 @@ The application uses Winston for structured logging with the following features:
 ### Using the logger
 
 ```typescript
-import { logger } from './utils/index.js';
+import { logger } from './utils/index';
 
 // Different log levels
 logger.error('Critical error occurred', { error: 'details', userId: '123' });
@@ -211,7 +211,7 @@ logger.info('Regular information', { data: 'some value' });
 logger.debug('Debugging information');
 
 // Log with context using error handler
-import { asyncErrorHandler } from './utils/index.js';
+import { asyncErrorHandler } from './utils/index';
 
 const myFunction = asyncErrorHandler(async () => {
   // Your code here

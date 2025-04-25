@@ -5,7 +5,7 @@
  * Uses the official Dune Analytics Client SDK to retrieve query results.
  */
 import { DuneClient } from "@duneanalytics/client-sdk";
-import { logger, asyncErrorHandler } from "../utils/index.js";
+import { logger, asyncErrorHandler } from "../utils/index";
 
 // Get the API key from environment variables
 const duneApiKey = process.env.DUNE_API_KEY;

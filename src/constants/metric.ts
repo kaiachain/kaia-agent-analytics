@@ -4,7 +4,7 @@
  * This file defines the configuration for all metrics tracked by the application.
  * Each metric represents a specific blockchain KPI fetched from Dune Analytics.
  */
-import type { Metric } from "../types/index.js";
+import type { Metric } from "../types/index";
 
 /**
  * Array of all metrics to be analyzed.
