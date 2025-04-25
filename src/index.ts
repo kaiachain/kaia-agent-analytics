@@ -20,6 +20,12 @@ import { logger, asyncErrorHandler, setupGlobalErrorHandlers } from "./utils/ind
 // Setup global error handlers
 setupGlobalErrorHandlers();
 
+// Log current configuration
+logger.debug('Application configuration', {
+  debugLogsEnabled: process.env.DEBUG_LOGS?.toLowerCase() === 'true',
+  metricsCount: METRICS.length,
+});
+
 /**
  * Generates the analysis prompt for a given metric and its data
  * 
@@ -28,6 +34,11 @@ setupGlobalErrorHandlers();
  * @returns A formatted prompt string for the Gemini AI model
  */
 function createAnalysisPrompt(metric: Metric, data: string | null): string {
+  logger.debug(`Creating analysis prompt for ${metric.name}`, {
+    metric,
+    dataLength: data?.length || 0
+  });
+
   return `
 You are provided with the latest time-series data for the metric: ${metric.name}. Your task is to analyze this data and provide insights in JSON format.
 
@@ -69,6 +80,11 @@ ${data}
  * @returns Parsed MetricAnalysis object or error information
  */
 function parseGeminiResponse(geminiResult: string | null, metricName: string): MetricAnalysis | Record<string, any> {
+  logger.debug(`Parsing Gemini response for metric: ${metricName}`, {
+    responseType: typeof geminiResult,
+    responseLength: typeof geminiResult === 'string' ? geminiResult.length : 0
+  });
+
   if (typeof geminiResult !== 'string') {
     logger.error(`Received non-string result for metric ${metricName}`, { rawResult: geminiResult });
     return { 
@@ -81,7 +97,12 @@ function parseGeminiResponse(geminiResult: string | null, metricName: string): M
   const cleanedResult = geminiResult.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
   
   try {
-    return JSON.parse(cleanedResult);
+    const parsedResult = JSON.parse(cleanedResult);
+    logger.debug(`Successfully parsed JSON response for metric: ${metricName}`, {
+      significance: parsedResult.significance,
+      latestValue: parsedResult.latestValue
+    });
+    return parsedResult;
   } catch (error) {
     logger.error(`Failed to parse JSON for metric ${metricName}`, { 
       error: error instanceof Error ? error.message : String(error),
@@ -110,15 +131,30 @@ function parseGeminiResponse(geminiResult: string | null, metricName: string): M
  */
 const processMetric = asyncErrorHandler(async (metric: Metric): Promise<MetricAnalysis | Record<string, any>> => {
   logger.info(`Awaiting data from Dune for metric: ${metric.name}`, { metricId: metric.queryId });
+  logger.debug(`Requesting Dune data with parameters`, { 
+    queryId: metric.queryId, 
+    limit: metric.limit,
+    frequency: metric.frequency 
+  });
   
   // Fetch the latest data for this metric from Dune
   const data = await getLatestResult(metric.queryId, metric.limit);
   
   logger.info(`Data fetched from Dune for metric: ${metric.name}`, {});
+  logger.debug(`Dune data details`, { 
+    dataReceived: !!data, 
+    dataSize: data?.length || 0 
+  });
+  
   // Create the analysis prompt for this metric
   const prompt = createAnalysisPrompt(metric, data);
   
   logger.info(`Awaiting Gemini response for metric: ${metric.name}`, {metricId: metric.queryId});
+  logger.debug(`Sending prompt to Gemini API`, { 
+    promptLength: prompt.length,
+    model: "gemini-2.0-flash" 
+  });
+  
   // Generate content analysis using Gemini
   const geminiResult = await generateContent({
     modelName: "gemini-2.0-flash",
@@ -142,14 +178,26 @@ const processMetric = asyncErrorHandler(async (metric: Metric): Promise<MetricAn
  */
 const main = asyncErrorHandler(async (): Promise<void> => {
   logger.info(`Running analytics job`, { timestamp: new Date().toISOString() });
+  logger.debug(`Starting parallel processing of ${METRICS.length} metrics`, {
+    metricIds: METRICS.map(m => m.queryId)
+  });
   
   // Process all metrics in parallel
   const results = await Promise.all(METRICS.map(processMetric));
+  
+  logger.debug(`Completed processing all metrics`, {
+    resultsCount: results.length,
+    successfulResults: results.filter(r => !('error' in r)).length,
+    errorResults: results.filter(r => 'error' in r).length
+  });
   
   // Send the results to Slack
   await sendFormattedSlackMessage(results as MetricAnalysis[]);
   
   logger.info("Slack message sent successfully");
+  logger.debug("Analytics job completed successfully", {
+    timestamp: new Date().toISOString()
+  });
 }, "Main Process");
 
 // Get cron schedule from .env file or use default (every monday at 10:00 AM singapore time)

@@ -94,7 +94,6 @@ The application fetches relevant metrics from Dune Analytics, processes the data
    # Optional Configuration
    CRON_SCHEDULE=0 10 * * 1  # Run every Monday at 10:00 AM
    TZ=Asia/Singapore         # Timezone for cron scheduling
-   NODE_ENV=production       # Set to 'development' for debug logs
    ```
 
 ## 📊 Usage
@@ -215,25 +214,29 @@ For more detailed Docker setup instructions, see [DOCKER.md](DOCKER.md).
 
 The application uses Winston for structured logging with the following features:
 
-- **Log levels**: error, warn, info, http, debug (controlled by NODE_ENV)
+- **Log levels**: error, warn, info, http, debug
 - **Environment configuration**:
-  - **Production mode** (default): Only shows info-level and above logs
-  - **Development mode**: Shows all logs including debug-level for detailed troubleshooting
+  - **Regular mode** (default): Only shows info-level and above logs (info, warn, error)
+  - **Debug mode**: Shows all logs including verbose debug-level logs for detailed troubleshooting
 
 > **Note**: The file logging functionality (logs/combined.log and logs/error.log) is included in the code but is commented out by default. To enable file logging, uncomment the relevant section in `src/utils/logger.ts`.
 
-### Environment Configuration
+### Controlling Debug Logs
 
-You can control the logging level with the NODE_ENV variable:
+You can control the logging level with the `DEBUG_LOGS` environment variable:
 
 ```bash
-# Production mode (default if not specified)
+# Regular mode (default if not specified)
 # Shows only info, warn, and error logs
-NODE_ENV=production npm start
+DEBUG_LOGS=false npm start
 
-# Development mode
-# Shows all logs including debug messages
-NODE_ENV=development npm start
+# Debug mode
+# Shows all logs including detailed debug messages
+DEBUG_LOGS=true npm start
+
+# Using npm scripts with debug logs enabled
+npm run dev          # For development with debug logs
+npm run start:debug  # For production build with debug logs
 ```
 
 ### Using the logger
@@ -245,7 +248,7 @@ import { logger } from './utils';
 logger.error('Critical error occurred', { error: 'details', userId: '123' });
 logger.warn('Warning message', { source: 'function name' });
 logger.info('Regular information', { data: 'some value' });
-logger.debug('Debugging information');
+logger.debug('Debugging information - only shown when DEBUG_LOGS=true');
 ```
 
 ## 🤝 Contributing

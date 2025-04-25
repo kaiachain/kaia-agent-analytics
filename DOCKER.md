@@ -13,9 +13,9 @@ GEMINI_API_KEY=your_gemini_api_key_here
 SLACK_WEBHOOK_URL=your_slack_webhook_url_here
 
 # Optional Configuration
-NODE_ENV=production
 CRON_SCHEDULE=0 10 * * 1  # Run every Monday at 10:00 AM
 TZ=Asia/Singapore          # Timezone for cron scheduling
+DEBUG_LOGS=false           # Set to 'true' to enable detailed debug logging
 ```
 
 ## Building and Running with Docker
@@ -53,4 +53,4 @@ The container is configured to use Singapore time (Asia/Singapore) to ensure cro
 The Docker setup includes a volume mount for logs:
 - `./logs:/app/logs`: Maps the local `logs` directory to the container's log directory
 
-This ensures that logs persist even if the container is restarted. 
+This ensures that logs persist even if the container is restarted.

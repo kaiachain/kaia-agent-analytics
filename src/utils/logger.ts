@@ -9,8 +9,10 @@ const levels = {
   debug: 4,
 };
 
-// Define level based on environment - default to production if not specified
-const level = (process.env.NODE_ENV && process.env.NODE_ENV.toLowerCase() !== 'production') ? 'debug' : 'info';
+// Define level based on DEBUG_LOGS environment variable
+// If DEBUG_LOGS is 'true', show all logs including debug level
+// Otherwise, only show info, warn, and error logs
+const level = process.env.DEBUG_LOGS?.toLowerCase() === 'true' ? 'debug' : 'info';
 
 // Define colors for each level
 const colors = {

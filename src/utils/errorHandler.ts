@@ -42,8 +42,8 @@ export const setupGlobalErrorHandlers = () => {
   // Handle uncaught exceptions
   process.on('uncaughtException', (error) => {
     handleError(error, 'Uncaught Exception');
-    // Exit with error in production mode or if not explicitly set to development
-    if (!process.env.NODE_ENV || process.env.NODE_ENV.toLowerCase() === 'production') {
+    // Exit with error unless DEBUG_LOGS is set to true
+    if (process.env.DEBUG_LOGS?.toLowerCase() !== 'true') {
       process.exit(1);
     }
   });
