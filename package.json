@@ -20,7 +20,7 @@
   },
   "keywords": [],
   "author": "Kaiachain",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/kaiachain/kaia-agent-analytics/issues"
   },
