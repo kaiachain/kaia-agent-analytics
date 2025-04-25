@@ -1,4 +1,4 @@
-import { logger } from './index';
+import logger from './logger';
 
 /**
  * Function to handle and log errors
