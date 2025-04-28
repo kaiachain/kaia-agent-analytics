@@ -21,7 +21,7 @@ export const METRICS: Metric[] = [
     {
         name: "Total Revenue",
         queryId: 4711363,
-        sectionUrl: "https://dune.com/queries/4711363",
+        sectionUrl: "https://dune.com/kaia_foundation/kaia-kpi-full-dashboard#total-revenue-revenue-composition",
         frequency: "weekly",
         fromHistoricalDate: "past month",
         limit: 16
@@ -29,7 +29,7 @@ export const METRICS: Metric[] = [
     {
         name: "Kaia Weekly Addresses with Non-zero Balance(Over $10 KAIA balance)",
         queryId: 4986206,
-        sectionUrl: "https://dune.com/queries/4986206/",
+        sectionUrl: "https://dune.com/kaia_foundation/kaia-kpi-full-dashboard#outflow",
         frequency: "weekly",
         fromHistoricalDate: "past month",
         limit: 8
@@ -45,7 +45,7 @@ export const METRICS: Metric[] = [
     {
         name: "Kaia - TVL(Including Liquid staking TVL)",
         queryId: 4230294,
-        sectionUrl: "https://dune.com/queries/4230294",
+        sectionUrl: "https://dune.com/kaia_foundation/kaia-kpi-full-dashboard#tvl-of-kaiakaia-ecosystem",
         frequency: "daily",
         fromHistoricalDate: "past month",
         limit: 62
