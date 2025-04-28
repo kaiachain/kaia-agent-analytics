@@ -29,7 +29,7 @@ export const METRICS: Metric[] = [
     {
         name: "Kaia Active Weekly Addresses with Over $10 KAIA balance",
         queryId: 4986206,
-        sectionUrl: "https://dune.com/kaia_foundation/kaia-kpi-full-dashboard#outflow",
+        sectionUrl: "https://dune.com/kaia_foundation/kaia-kpi-full-dashboard#non-zero-balance-addresses",
         frequency: "weekly",
         fromHistoricalDate: "past month",
         limit: 8
@@ -37,7 +37,7 @@ export const METRICS: Metric[] = [
     {
         name: "Kaia Weekly Trading Volume",
         queryId: 4966021,
-        sectionUrl: "https://dune.com/queries/4966021/",
+        sectionUrl: "https://dune.com/kaia_foundation/2025-kaia-kpi-dashboard#trading-volume",
         frequency: "weekly",
         fromHistoricalDate: "past month",
         limit: 8
