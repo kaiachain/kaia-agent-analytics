@@ -19,7 +19,7 @@ import type { Metric } from "../types";
  */
 export const METRICS: Metric[] = [
     {
-        name: "Total Revenue",
+        name: "Total Revenue (DEX fee + Gas fee)",
         queryId: 4711363,
         sectionUrl: "https://dune.com/kaia_foundation/kaia-kpi-full-dashboard#total-revenue-revenue-composition",
         frequency: "weekly",
@@ -27,7 +27,7 @@ export const METRICS: Metric[] = [
         limit: 16
     },
     {
-        name: "Kaia Weekly Addresses with Non-zero Balance(Over $10 KAIA balance)",
+        name: "Kaia Active Weekly Addresses with Over $10 KAIA balance",
         queryId: 4986206,
         sectionUrl: "https://dune.com/kaia_foundation/kaia-kpi-full-dashboard#outflow",
         frequency: "weekly",
@@ -35,12 +35,12 @@ export const METRICS: Metric[] = [
         limit: 8
     },
     {
-        name: "Kaia Daily Volume",
+        name: "Kaia Weekly Trading Volume",
         queryId: 4966021,
         sectionUrl: "https://dune.com/queries/4966021/",
-        frequency: "daily",
+        frequency: "weekly",
         fromHistoricalDate: "past month",
-        limit: 62
+        limit: 8
     },
     {
         name: "Kaia - TVL(Including Liquid staking TVL)",
