@@ -63,15 +63,22 @@ Follow these steps:
     - HIGH: If historical_average < abs(recent_absolute_change) <= 2 * historical_average
     - CRITICAL: If abs(recent_absolute_change) > 2 * historical_average
 
+Format all numerical values as follows:
+- Add appropriate units to all numbers (e.g., $, ETH, transactions, users)
+- Use the international number system with commas (e.g., 1,234,567)
+- Round all numbers to the nearest integer, except for percentage changes
+- For large numbers, use abbreviated formats: thousands (K), millions (M), billions (B), etc. (e.g., $59,239,487 → $59.2M)
+- Show percentage changes with up to 2 decimal places (e.g., 15.25%)
+
 Output your response strictly in the following JSON format:
 {
     "metricName": "${metric.name}", //string
     "sectionUrl": "${metric.sectionUrl}", //string
-    "latestValue": "The most recent data point value", //number
-    "absoluteChange": "The calculated recent_absolute_change", //number
-    "percentageChange": "The calculated recent_percentage_change (e.g., '+15.2%' or '-5.0%')", //number
-    "historicalAverage": "The calculated historical_average", //number
-    "technicalAnalysis": "Your concise technical analysis here, including the key numerical values.", //string
+    "latestValue": "The most recent data point value with proper formatting", //string
+    "absoluteChange": "The calculated recent_absolute_change with proper formatting", //string
+    "percentageChange": "The calculated recent_percentage_change with proper formatting (e.g., '+15.25%' or '-5.01%')", //string
+    "historicalAverage": "The calculated historical_average with proper formatting", //string
+    "technicalAnalysis": "Your concise technical analysis here, including the key numerical values with proper formatting.", //string
     "significance": "LOW | MEDIUM | HIGH | CRITICAL" //string
 }
     
