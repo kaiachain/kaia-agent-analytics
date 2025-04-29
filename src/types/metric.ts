@@ -22,4 +22,7 @@ export interface Metric {
     
     /** Maximum number of data points to fetch and analyze */
     limit: number;
+
+    /** Optional: Custom prompt for generating reports */
+    additionalPrompt?: string;
 }

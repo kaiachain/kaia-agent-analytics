@@ -24,7 +24,8 @@ export const METRICS: Metric[] = [
         sectionUrl: "https://dune.com/kaia_foundation/kaia-kpi-full-dashboard#total-revenue-revenue-composition",
         frequency: "weekly",
         fromHistoricalDate: "past month",
-        limit: 16
+        limit: 16,
+        additionalPrompt: "Calculate total revenue by summing DEX fees and Gas fees for each period. For the latest value, report the combined total from the most recent week. For historical trend analysis: 1) Examine the overall combined revenue trend, noting any significant changes; 2) Compare DEX fees vs Gas fees to identify which component is driving changes; 3) Calculate week-over-week percentage changes to highlight growth or decline patterns."
     },
     {
         name: "Kaia Active Weekly Addresses with Over $10 KAIA balance",

@@ -51,7 +51,7 @@ function createAnalysisPrompt(metric: Metric, data: string | null): string {
 You are provided with the latest time-series data for the metric: ${metric.name}. Your task is to analyze this data and provide insights in JSON format.
 
 Follow these steps:
-1.  Identify the two most recent data points from the provided data (let's call them 'latest_value' and 'previous_value').
+1.  Identify the two most recent dates from the provided data (let's call them 'latest_value' and 'previous_value'). Today's date is '${new Date().toISOString().split("T")[0]}'. The latest data point is the most recent one, and the previous data point is the one before it. 
 2.  Calculate the absolute change between these two points: 'recent_absolute_change' = latest_value - previous_value.
 3.  Calculate the percentage change: 'recent_percentage_change' = (recent_absolute_change / previous_value) * 100. Handle division by zero if previous_value is 0.
 4.  Analyze the historical trend based on metric frequency:
@@ -73,11 +73,13 @@ Follow these steps:
     - CRITICAL: If abs(recent_absolute_change) > 2 * historical_average
 
 Format all numerical values as follows:
+- Round all numbers to the nearest integer, except for percentage changes (e.g., 992.6051817027819 → 993, but 9.123456% → 9.12%)
 - Add appropriate units to all numbers (e.g., $, ETH, transactions, users)
 - Use the international number system with commas (e.g., 1,234,567)
-- Round all numbers to the nearest integer, except for percentage changes
 - For large numbers, use abbreviated formats: thousands (K), millions (M), billions (B), etc. (e.g., $59,239,487 → $59.2M)
 - Show percentage changes with up to 2 decimal places (e.g., +15.25%) along with the sign (+ or -)
+
+${metric.additionalPrompt || ""}
 
 Output your response strictly in the following JSON format:
 {
