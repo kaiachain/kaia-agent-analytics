@@ -17,7 +17,7 @@ import { METRICS } from "./constants/index";
 import {
   getLatestResult,
   generateContent,
-  sendFormattedSlackMessage,
+  sendGridFormattedSlackMessage
 } from "./services/index";
 import {
   logger,
@@ -54,9 +54,18 @@ Follow these steps:
 1.  Identify the two most recent data points from the provided data (let's call them 'latest_value' and 'previous_value').
 2.  Calculate the absolute change between these two points: 'recent_absolute_change' = latest_value - previous_value.
 3.  Calculate the percentage change: 'recent_percentage_change' = (recent_absolute_change / previous_value) * 100. Handle division by zero if previous_value is 0.
-4.  Calculate the average value of the data over the past ${metric.frequency} period, for ${metric.fromHistoricalDate}. Let's call this 'historical_average'.
-5.  Compare the 'recent_absolute_change' with the 'historical_average'.
-6.  Based on this comparison, provide a concise technical analysis (around 50-60 words) focusing on the significance of the most recent change relative to the historical average trend. **Explicitly mention the latest_value, recent_absolute_change, recent_percentage_change, and historical_average in your analysis.**
+4.  Analyze the historical trend based on metric frequency:
+    - If the frequency is '${metric.frequency}' and the historical period is from '${metric.fromHistoricalDate}', extract all data points within this period.
+    - Calculate the trend between consecutive data points throughout the entire historical period.
+    - Identify any patterns, cycles, or anomalies in the historical trend.
+    - Calculate the 'historical_average' value across the entire period.
+5.  Compare the most recent trend with the historical trend:
+    - Determine if the recent change is following the established historical pattern or deviating from it.
+    - Identify if the latest data point represents an acceleration, deceleration, or reversal of the historical trend.
+6.  Based on this comprehensive trend analysis, provide a concise technical analysis (around 20-30 words) that discusses:
+    - How the latest change compares to the historical trend
+    - Whether the metric is showing unusual behavior compared to its historical pattern
+    - Any potential explanations for significant deviations from the established trend
 7.  Determine the significance level based on the following criteria:
     - LOW: If abs(recent_absolute_change) <= 0.5 * historical_average
     - MEDIUM: If 0.5 * historical_average < abs(recent_absolute_change) <= historical_average
@@ -68,17 +77,19 @@ Format all numerical values as follows:
 - Use the international number system with commas (e.g., 1,234,567)
 - Round all numbers to the nearest integer, except for percentage changes
 - For large numbers, use abbreviated formats: thousands (K), millions (M), billions (B), etc. (e.g., $59,239,487 → $59.2M)
-- Show percentage changes with up to 2 decimal places (e.g., 15.25%)
+- Show percentage changes with up to 2 decimal places (e.g., +15.25%) along with the sign (+ or -)
 
 Output your response strictly in the following JSON format:
 {
     "metricName": "${metric.name}", //string
     "sectionUrl": "${metric.sectionUrl}", //string
+    "fromHistoricalDate": "${metric.fromHistoricalDate}", //string
     "latestValue": "The most recent data point value with proper formatting", //string
     "absoluteChange": "The calculated recent_absolute_change with proper formatting", //string
     "percentageChange": "The calculated recent_percentage_change with proper formatting (e.g., '+15.25%' or '-5.01%')", //string
     "historicalAverage": "The calculated historical_average with proper formatting", //string
-    "technicalAnalysis": "Your concise technical analysis here, including the key numerical values with proper formatting.", //string
+    "historicalTrend": "A brief description of the historical trend pattern", //string
+    "technicalAnalysis": "Your comprehensive technical analysis comparing recent and historical trends", //string
     "significance": "LOW | MEDIUM | HIGH | CRITICAL" //string
 }
     
@@ -226,7 +237,7 @@ const main = asyncErrorHandler(async (): Promise<void> => {
   });
 
   // Send the results to Slack
-  await sendFormattedSlackMessage(results as MetricAnalysis[]);
+  await sendGridFormattedSlackMessage(results as MetricAnalysis[]);
 
   logger.info("Slack message sent successfully");
   logger.debug("Analytics job completed successfully", {
