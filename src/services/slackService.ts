@@ -66,7 +66,6 @@ const createMetricsGrid = (metricsData: MetricAnalysis[]): any[] => {
           emoji: true
         },
         url: metric.sectionUrl,
-        action_id: `view_dune_${metric.metricName.replace(/\s+/g, '_')}`
       }
     });
     

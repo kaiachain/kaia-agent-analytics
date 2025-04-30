@@ -23,7 +23,7 @@ export const METRICS: Metric[] = [
         queryId: 4711363,
         sectionUrl: "https://dune.com/kaia_foundation/kaia-kpi-full-dashboard#total-revenue-revenue-composition",
         frequency: "weekly",
-        fromHistoricalDate: "past month",
+        fromHistoricalDate: "previous month",
         limit: 16,
         additionalPrompt: "Calculate total revenue by summing DEX fees and Gas fees for each period. For the latest value, report the combined total from the most recent week. For historical trend analysis: 1) Examine the overall combined revenue trend, noting any significant changes; 2) Compare DEX fees vs Gas fees to identify which component is driving changes; 3) Calculate week-over-week percentage changes to highlight growth or decline patterns."
     },
@@ -32,7 +32,7 @@ export const METRICS: Metric[] = [
         queryId: 4986206,
         sectionUrl: "https://dune.com/kaia_foundation/kaia-kpi-full-dashboard#non-zero-balance-addresses",
         frequency: "weekly",
-        fromHistoricalDate: "past month",
+        fromHistoricalDate: "previous month",
         limit: 8
     },
     {
@@ -40,7 +40,7 @@ export const METRICS: Metric[] = [
         queryId: 4966021,
         sectionUrl: "https://dune.com/kaia_foundation/2025-kaia-kpi-dashboard#trading-volume",
         frequency: "weekly",
-        fromHistoricalDate: "past month",
+        fromHistoricalDate: "previous month",
         limit: 8
     },
     {
@@ -48,7 +48,7 @@ export const METRICS: Metric[] = [
         queryId: 4230294,
         sectionUrl: "https://dune.com/kaia_foundation/kaia-kpi-full-dashboard#tvl-of-kaiakaia-ecosystem",
         frequency: "daily",
-        fromHistoricalDate: "past month",
+        fromHistoricalDate: "previous month",
         limit: 62
     }
 ]
