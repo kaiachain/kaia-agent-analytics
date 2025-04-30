@@ -74,7 +74,7 @@ const createMetricsGrid = (metricsData: MetricAnalysis[]): any[] => {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `*Latest:* ${metric.latestValue}\n*Percentage Change (from last ${metric.frequency}):* ${metric.percentageChange}\n*Absolute Change* (from last ${metric.frequency}): ${metric.absoluteChange}\n*Historical Average (${metric.fromHistoricalDate}):* ${metric.historicalAverage}`
+        text: `*Latest:* ${metric.latestValue}\n*Percentage Change (from last ${metric.frequency}):* ${metric.percentageChange}\n*Absolute Change (from last ${metric.frequency}):* ${metric.absoluteChange}\n*Historical Average (${metric.fromHistoricalDate}):* ${metric.historicalAverage}`
       }
     });
 

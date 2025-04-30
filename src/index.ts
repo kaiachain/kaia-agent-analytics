@@ -12,7 +12,7 @@
  */
 import "dotenv/config";
 import cron from "node-cron";
-import type { Metric, MetricAnalysis } from "./types/index";
+import type { Metric, MetricAnalysis, HistoricalPeriod } from "./types/index";
 import { METRICS } from "./constants/index";
 import {
   getLatestResult,
@@ -35,6 +35,132 @@ logger.debug("Application configuration", {
 });
 
 /**
+ * Formats a HistoricalPeriod object into a human-readable description relative to the current date.
+ *
+ * @param period - A HistoricalPeriod object describing the historical period.
+ * @returns A formatted string describing the period (e.g., "for months January to March", "for year 2024", "for date 2025-04-29", "from 2025-04-24").
+ */
+function formatHistoricalPeriodDescription(period: HistoricalPeriod): string {
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0); // Use UTC start of day
+
+  // Helper function to format date as YYYY-MM-DD
+  const formatDate = (date: Date): string => {
+    const year = date.getUTCFullYear();
+    const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
+    const day = date.getUTCDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Helper function to get month name
+  const getMonthName = (date: Date): string => {
+    return date.toLocaleString('default', { month: 'long', timeZone: 'UTC' });
+  };
+
+  switch (period.type) {
+    case 'relativeRange': {
+      const { count, unit } = period;
+      if (count <= 0) return "Invalid range";
+      const endDate = new Date(today);
+      const startDate = new Date(today);
+
+      switch (unit) {
+        case 'day':
+          endDate.setUTCDate(today.getUTCDate() - 1);
+          startDate.setUTCDate(today.getUTCDate() - count);
+          return `for dates ${formatDate(startDate)} to ${formatDate(endDate)}`;
+        case 'week':
+          endDate.setUTCDate(today.getUTCDate() - today.getUTCDay() - 1); // End of last week (Sunday-Saturday)
+          startDate.setUTCDate(endDate.getUTCDate() - (count - 1) * 7);
+          startDate.setUTCDate(startDate.getUTCDate() - startDate.getUTCDay()); // Start of that week (Sunday)
+          return `for dates ${formatDate(startDate)} to ${formatDate(endDate)}`;
+        case 'month':
+          endDate.setUTCDate(0); // Last day of previous month
+          startDate.setUTCMonth(today.getUTCMonth() - count, 1); // First day of the start month
+          // Handle case where count is 1 separately for single month name
+          if (count === 1) {
+             return `for month ${getMonthName(endDate)}`;
+          }
+          return `for months ${getMonthName(startDate)} to ${getMonthName(endDate)}`;
+        case 'year':
+          const endYear = today.getUTCFullYear() - 1;
+          const startYear = today.getUTCFullYear() - count;
+           // Handle case where count is 1 separately for single year
+          if (count === 1) {
+             return `for year ${endYear}`;
+          }
+          return `for years ${startYear} to ${endYear}`;
+      }
+      break; // Should not be reached due to inner returns
+    }
+
+    case 'relativeSpecific': {
+      switch (period.period) {
+        case 'today':
+          return `for date ${formatDate(today)}`;
+        case 'yesterday':
+          const yesterday = new Date(today);
+          yesterday.setUTCDate(today.getUTCDate() - 1);
+          return `for date ${formatDate(yesterday)}`;
+        case 'thisWeek':
+           const startOfWeek = new Date(today);
+           startOfWeek.setUTCDate(today.getUTCDate() - today.getUTCDay());
+           return `for week starting ${formatDate(startOfWeek)}`;
+        case 'lastWeek':
+           const endOfLastWeek = new Date(today);
+           endOfLastWeek.setUTCDate(today.getUTCDate() - today.getUTCDay() - 1);
+           const startOfLastWeek = new Date(endOfLastWeek);
+           startOfLastWeek.setUTCDate(endOfLastWeek.getUTCDate() - 6);
+           return `for week ${formatDate(startOfLastWeek)} to ${formatDate(endOfLastWeek)}`;
+        case 'thisMonth':
+          const startOfMonth = new Date(today);
+          startOfMonth.setUTCDate(1);
+          return `for month ${getMonthName(startOfMonth)} ${startOfMonth.getUTCFullYear()}`;
+        case 'lastMonth':
+          const lastMonthDate = new Date(today);
+          lastMonthDate.setUTCDate(0); // Go to last day of previous month
+          return `for month ${getMonthName(lastMonthDate)} ${lastMonthDate.getUTCFullYear()}`;
+        case 'thisYear':
+          return `for year ${today.getUTCFullYear()}`;
+        case 'lastYear':
+          return `for year ${today.getUTCFullYear() - 1}`;
+      }
+      break; // Should not be reached
+    }
+
+    case 'specificMonth': {
+      const date = new Date(Date.UTC(period.year, period.month, 1));
+      return `for month ${getMonthName(date)} ${period.year}`;
+    }
+
+    case 'specificYear':
+      return `for year ${period.year}`;
+
+    case 'specificDate':
+      // Check if the specific date is yesterday or today relative to the *actual* run time
+      const specificD = new Date(period.date + 'T00:00:00Z'); // Parse as UTC
+      const yesterday = new Date(today);
+      yesterday.setUTCDate(today.getUTCDate() - 1);
+      if (specificD.getTime() === today.getTime()) return `for date ${formatDate(today)} (today)`;
+      if (specificD.getTime() === yesterday.getTime()) return `for date ${formatDate(yesterday)} (yesterday)`;
+      // Otherwise, just state the date
+      return `from ${period.date}`;
+
+    default:
+      // This should not happen with TypeScript checking, but good practice
+      logger.warn('Unrecognized HistoricalPeriod type', { period });
+      // Attempt to safely stringify the object for logging/debugging
+      try {
+        return `Invalid period object: ${JSON.stringify(period)}`;
+      } catch {
+        return "Invalid period object";
+      }
+  }
+  // Fallback if somehow a case doesn't return
+  return "Unknown period";
+}
+
+/**
  * Generates the analysis prompt for a given metric and its data
  *
  * @param metric - Metric configuration object containing metadata
@@ -47,6 +173,9 @@ function createAnalysisPrompt(metric: Metric, data: string | null): string {
     dataLength: data?.length || 0,
   });
 
+  // Format the historical period description using the new object structure
+  const historicalPeriodDescription = formatHistoricalPeriodDescription(metric.fromHistoricalDate);
+
   return `
 You are provided with the latest time-series data for the metric: ${metric.name}. Your task is to analyze this data and provide insights in JSON format.
 
@@ -55,7 +184,7 @@ Follow these steps:
 2.  Calculate the absolute change between these two points: 'recent_absolute_change' = latest_value - previous_value.
 3.  Calculate the percentage change: 'recent_percentage_change' = (recent_absolute_change / previous_value) * 100. Handle division by zero if previous_value is 0.
 4.  Analyze the historical trend based on metric frequency:
-    - If the frequency is '${metric.frequency}' and the historical period is from '${metric.fromHistoricalDate}', extract all data points within this period.
+    - If the frequency is '${metric.frequency}ly' and the historical period is ${historicalPeriodDescription}, extract all data points within this period.
     - Calculate the trend between consecutive data points throughout the entire historical period.
     - Identify any patterns, cycles, or anomalies in the historical trend.
     - Calculate the 'historical_average' value across the entire period.
@@ -72,7 +201,7 @@ Follow these steps:
     - HIGH: If historical_average < abs(recent_absolute_change) <= 2 * historical_average
     - CRITICAL: If abs(recent_absolute_change) > 2 * historical_average
 
-Format all numerical values as follows:
+Strictly format all numerical values as follows:
 - Round all numbers to the nearest integer, except for percentage changes (e.g., 992.6051817027819 → 993, but 9.123456% → 9.12%)
 - Add appropriate units to all numbers (e.g., $, ETH, transactions, users)
 - Use the international number system with commas (e.g., 1,234,567)
@@ -86,7 +215,7 @@ Output your response strictly in the following JSON format:
     "metricName": "${metric.name}", //string
     "sectionUrl": "${metric.sectionUrl}", //string
     "frequency": "${metric.frequency}", //string
-    "fromHistoricalDate": "${metric.fromHistoricalDate}", //string
+    "fromHistoricalDate": "${historicalPeriodDescription}", //string
     "latestValue": "The most recent data point value with proper formatting", //string
     "absoluteChange": "The calculated recent_absolute_change with proper formatting", //string
     "percentageChange": "The calculated recent_percentage_change with proper formatting (e.g., '+15.25%' or '-5.01%')", //string
