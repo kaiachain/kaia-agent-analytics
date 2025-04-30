@@ -43,8 +43,8 @@ const generateContent = asyncErrorHandler(async ({
   modelName,
   prompt,
   systemInstruction,
-  temperature = 0.1,
-  maxOutputTokens = 1000,
+  temperature = 0.0,
+  maxOutputTokens = 10000,
 }: GenerateContentParams): Promise<string | null> => {
   logger.info(`Generating content with Gemini model: ${modelName}`, {
     temperature,
