@@ -44,18 +44,16 @@ const generateContent = asyncErrorHandler(async ({
   prompt,
   systemInstruction,
   temperature = 0.0,
-  maxOutputTokens = 10000,
+  maxOutputTokens = 65536,
 }: GenerateContentParams): Promise<string | null> => {
   logger.info(`Generating content with Gemini model: ${modelName}`, {
     temperature,
-    maxOutputTokens,
     promptLength: prompt.length,
   });
   
   logger.debug('Detailed Gemini request parameters', {
     modelName,
     temperature,
-    maxOutputTokens,
     promptLength: prompt.length,
     systemInstructionLength: systemInstruction.length,
     firstPromptChars: prompt.substring(0, 100) + '...'
@@ -76,6 +74,7 @@ const generateContent = asyncErrorHandler(async ({
   const responseText = response.text ?? null;
   
   logger.debug('Gemini response details', {
+    response: response,
     requestTime: `${requestTime}ms`,
     responseLength: responseText?.length || 0,
     hasResponse: !!responseText,

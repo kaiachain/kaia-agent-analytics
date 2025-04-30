@@ -326,12 +326,12 @@ const processMetric = asyncErrorHandler(
     });
     logger.debug(`Sending prompt to Gemini API`, {
       promptLength: prompt.length,
-      model: "gemini-2.5-flash-preview-04-17",
+      model: "gemini-2.5-pro-preview-03-25",
     });
 
     // Generate content analysis using Gemini
     const geminiResult = await generateContent({
-      modelName: "gemini-2.5-flash-preview-04-17",
+      modelName: "gemini-2.5-pro-preview-03-25",
       systemInstruction:
         "You are an expert AI blockchain data analyst. Your knowledge includes all standard data analysis techniques and deep expertise in blockchain ecosystems. You excel at retrieving data from Dune Analytics and performing technical analysis on it. Focus on providing accurate, data-driven blockchain insights based on Dune Analytics data.",
       prompt: prompt,
