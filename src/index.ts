@@ -12,12 +12,12 @@
  */
 import "dotenv/config";
 import cron from "node-cron";
-import type { Metric, MetricAnalysis } from "./types/index";
+import type { Metric, MetricAnalysis, HistoricalPeriod } from "./types/index";
 import { METRICS } from "./constants/index";
 import {
   getLatestResult,
   generateContent,
-  sendFormattedSlackMessage,
+  sendGridFormattedSlackMessage
 } from "./services/index";
 import {
   logger,
@@ -35,6 +35,132 @@ logger.debug("Application configuration", {
 });
 
 /**
+ * Formats a HistoricalPeriod object into a human-readable description relative to the current date.
+ *
+ * @param period - A HistoricalPeriod object describing the historical period.
+ * @returns A formatted string describing the period (e.g., "for months January to March", "for year 2024", "for date 2025-04-29", "from 2025-04-24").
+ */
+function formatHistoricalPeriodDescription(period: HistoricalPeriod): string {
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0); // Use UTC start of day
+
+  // Helper function to format date as YYYY-MM-DD
+  const formatDate = (date: Date): string => {
+    const year = date.getUTCFullYear();
+    const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
+    const day = date.getUTCDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Helper function to get month name
+  const getMonthName = (date: Date): string => {
+    return date.toLocaleString('default', { month: 'long', timeZone: 'UTC' });
+  };
+
+  switch (period.type) {
+    case 'relativeRange': {
+      const { count, unit } = period;
+      if (count <= 0) return "Invalid range";
+      const endDate = new Date(today);
+      const startDate = new Date(today);
+
+      switch (unit) {
+        case 'day':
+          endDate.setUTCDate(today.getUTCDate() - 1);
+          startDate.setUTCDate(today.getUTCDate() - count);
+          return `for dates ${formatDate(startDate)} to ${formatDate(endDate)}`;
+        case 'week':
+          endDate.setUTCDate(today.getUTCDate() - today.getUTCDay() - 1); // End of last week (Sunday-Saturday)
+          startDate.setUTCDate(endDate.getUTCDate() - (count - 1) * 7);
+          startDate.setUTCDate(startDate.getUTCDate() - startDate.getUTCDay()); // Start of that week (Sunday)
+          return `for dates ${formatDate(startDate)} to ${formatDate(endDate)}`;
+        case 'month':
+          endDate.setUTCDate(0); // Last day of previous month
+          startDate.setUTCMonth(today.getUTCMonth() - count, 1); // First day of the start month
+          // Handle case where count is 1 separately for single month name
+          if (count === 1) {
+             return `for month ${getMonthName(endDate)}`;
+          }
+          return `for months ${getMonthName(startDate)} to ${getMonthName(endDate)}`;
+        case 'year':
+          const endYear = today.getUTCFullYear() - 1;
+          const startYear = today.getUTCFullYear() - count;
+           // Handle case where count is 1 separately for single year
+          if (count === 1) {
+             return `for year ${endYear}`;
+          }
+          return `for years ${startYear} to ${endYear}`;
+      }
+      break; // Should not be reached due to inner returns
+    }
+
+    case 'relativeSpecific': {
+      switch (period.period) {
+        case 'today':
+          return `for date ${formatDate(today)}`;
+        case 'yesterday':
+          const yesterday = new Date(today);
+          yesterday.setUTCDate(today.getUTCDate() - 1);
+          return `for date ${formatDate(yesterday)}`;
+        case 'thisWeek':
+           const startOfWeek = new Date(today);
+           startOfWeek.setUTCDate(today.getUTCDate() - today.getUTCDay());
+           return `for week starting ${formatDate(startOfWeek)}`;
+        case 'lastWeek':
+           const endOfLastWeek = new Date(today);
+           endOfLastWeek.setUTCDate(today.getUTCDate() - today.getUTCDay() - 1);
+           const startOfLastWeek = new Date(endOfLastWeek);
+           startOfLastWeek.setUTCDate(endOfLastWeek.getUTCDate() - 6);
+           return `for week ${formatDate(startOfLastWeek)} to ${formatDate(endOfLastWeek)}`;
+        case 'thisMonth':
+          const startOfMonth = new Date(today);
+          startOfMonth.setUTCDate(1);
+          return `for month ${getMonthName(startOfMonth)} ${startOfMonth.getUTCFullYear()}`;
+        case 'lastMonth':
+          const lastMonthDate = new Date(today);
+          lastMonthDate.setUTCDate(0); // Go to last day of previous month
+          return `for month ${getMonthName(lastMonthDate)} ${lastMonthDate.getUTCFullYear()}`;
+        case 'thisYear':
+          return `for year ${today.getUTCFullYear()}`;
+        case 'lastYear':
+          return `for year ${today.getUTCFullYear() - 1}`;
+      }
+      break; // Should not be reached
+    }
+
+    case 'specificMonth': {
+      const date = new Date(Date.UTC(period.year, period.month, 1));
+      return `for month ${getMonthName(date)} ${period.year}`;
+    }
+
+    case 'specificYear':
+      return `for year ${period.year}`;
+
+    case 'specificDate':
+      // Check if the specific date is yesterday or today relative to the *actual* run time
+      const specificD = new Date(period.date + 'T00:00:00Z'); // Parse as UTC
+      const yesterday = new Date(today);
+      yesterday.setUTCDate(today.getUTCDate() - 1);
+      if (specificD.getTime() === today.getTime()) return `for date ${formatDate(today)} (today)`;
+      if (specificD.getTime() === yesterday.getTime()) return `for date ${formatDate(yesterday)} (yesterday)`;
+      // Otherwise, just state the date
+      return `from ${period.date}`;
+
+    default:
+      // This should not happen with TypeScript checking, but good practice
+      logger.warn('Unrecognized HistoricalPeriod type', { period });
+      // Attempt to safely stringify the object for logging/debugging
+      try {
+        return `Invalid period object: ${JSON.stringify(period)}`;
+      } catch {
+        return "Invalid period object";
+      }
+  }
+  // Fallback if somehow a case doesn't return
+  return "Unknown period";
+}
+
+/**
  * Generates the analysis prompt for a given metric and its data
  *
  * @param metric - Metric configuration object containing metadata
@@ -47,31 +173,55 @@ function createAnalysisPrompt(metric: Metric, data: string | null): string {
     dataLength: data?.length || 0,
   });
 
+  // Format the historical period description using the new object structure
+  const historicalPeriodDescription = formatHistoricalPeriodDescription(metric.fromHistoricalDate);
+
   return `
 You are provided with the latest time-series data for the metric: ${metric.name}. Your task is to analyze this data and provide insights in JSON format.
 
 Follow these steps:
-1.  Identify the two most recent data points from the provided data (let's call them 'latest_value' and 'previous_value').
+1.  Identify the two most recent dates from the provided data (let's call them 'latest_value' and 'previous_value'). Today's date is '${new Date().toISOString().split("T")[0]}'. The latest data point is the most recent one, and the previous data point is the one before it. 
 2.  Calculate the absolute change between these two points: 'recent_absolute_change' = latest_value - previous_value.
 3.  Calculate the percentage change: 'recent_percentage_change' = (recent_absolute_change / previous_value) * 100. Handle division by zero if previous_value is 0.
-4.  Calculate the average value of the data over the past ${metric.frequency} period, for ${metric.fromHistoricalDate}. Let's call this 'historical_average'.
-5.  Compare the 'recent_absolute_change' with the 'historical_average'.
-6.  Based on this comparison, provide a concise technical analysis (around 50-60 words) focusing on the significance of the most recent change relative to the historical average trend. **Explicitly mention the latest_value, recent_absolute_change, recent_percentage_change, and historical_average in your analysis.**
+4.  Analyze the historical trend based on metric frequency:
+    - If the frequency is '${metric.frequency}ly' and the historical period is ${historicalPeriodDescription}, extract all data points within this period.
+    - Calculate the trend between consecutive data points throughout the entire historical period.
+    - Identify any patterns, cycles, or anomalies in the historical trend.
+    - Calculate the 'historical_average' value across the entire period.
+5.  Compare the most recent trend with the historical trend:
+    - Determine if the recent change is following the established historical pattern or deviating from it.
+    - Identify if the latest data point represents an acceleration, deceleration, or reversal of the historical trend.
+6.  Based on this comprehensive trend analysis, provide a concise technical analysis (around 20-30 words) that discusses:
+    - How the latest change compares to the historical trend
+    - Whether the metric is showing unusual behavior compared to its historical pattern
+    - Any potential explanations for significant deviations from the established trend
 7.  Determine the significance level based on the following criteria:
     - LOW: If abs(recent_absolute_change) <= 0.5 * historical_average
     - MEDIUM: If 0.5 * historical_average < abs(recent_absolute_change) <= historical_average
     - HIGH: If historical_average < abs(recent_absolute_change) <= 2 * historical_average
     - CRITICAL: If abs(recent_absolute_change) > 2 * historical_average
 
+Strictly format all numerical values as follows:
+- Round all numbers to the nearest integer, except for percentage changes (e.g., 992.6051817027819 → 993, but 9.123456% → 9.12%)
+- Add appropriate units to all numbers (e.g., $, ETH, transactions, users)
+- Use the international number system with commas (e.g., 1,234,567)
+- For large numbers, use abbreviated formats: thousands (K), millions (M), billions (B), etc. (e.g., $59,239,487 → $59.2M)
+- Show percentage changes with up to 2 decimal places (e.g., +15.25%) along with the sign (+ or -)
+
+${metric.additionalPrompt || ""}
+
 Output your response strictly in the following JSON format:
 {
     "metricName": "${metric.name}", //string
     "sectionUrl": "${metric.sectionUrl}", //string
-    "latestValue": "The most recent data point value", //number
-    "absoluteChange": "The calculated recent_absolute_change", //number
-    "percentageChange": "The calculated recent_percentage_change (e.g., '+15.2%' or '-5.0%')", //number
-    "historicalAverage": "The calculated historical_average", //number
-    "technicalAnalysis": "Your concise technical analysis here, including the key numerical values.", //string
+    "frequency": "${metric.frequency}", //string
+    "fromHistoricalDate": "${historicalPeriodDescription}", //string
+    "latestValue": "latest_value", //string 
+    "absoluteChange": "recent_absolute_change", //string
+    "percentageChange": "recent_percentage_change", //string
+    "historicalAverage": "historical_average", //string
+    "historicalTrend": "A brief description of the historical trend pattern", //string
+    "technicalAnalysis": "Your comprehensive technical analysis comparing recent and historical trends", //string
     "significance": "LOW | MEDIUM | HIGH | CRITICAL" //string
 }
     
@@ -176,12 +326,12 @@ const processMetric = asyncErrorHandler(
     });
     logger.debug(`Sending prompt to Gemini API`, {
       promptLength: prompt.length,
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-pro-preview-03-25",
     });
 
     // Generate content analysis using Gemini
     const geminiResult = await generateContent({
-      modelName: "gemini-2.0-flash",
+      modelName: "gemini-2.5-pro-preview-03-25",
       systemInstruction:
         "You are an expert AI blockchain data analyst. Your knowledge includes all standard data analysis techniques and deep expertise in blockchain ecosystems. You excel at retrieving data from Dune Analytics and performing technical analysis on it. Focus on providing accurate, data-driven blockchain insights based on Dune Analytics data.",
       prompt: prompt,
@@ -219,7 +369,7 @@ const main = asyncErrorHandler(async (): Promise<void> => {
   });
 
   // Send the results to Slack
-  await sendFormattedSlackMessage(results as MetricAnalysis[]);
+  await sendGridFormattedSlackMessage(results as MetricAnalysis[]);
 
   logger.info("Slack message sent successfully");
   logger.debug("Analytics job completed successfully", {

@@ -19,35 +19,36 @@ import type { Metric } from "../types";
  */
 export const METRICS: Metric[] = [
     {
-        name: "Total Revenue",
+        name: "Total Revenue (DEX fee + Gas fee)",
         queryId: 4711363,
-        sectionUrl: "https://dune.com/queries/4711363",
-        frequency: "weekly",
-        fromHistoricalDate: "past month",
-        limit: 16
+        sectionUrl: "https://dune.com/kaia_foundation/kaia-kpi-full-dashboard#total-revenue-revenue-composition",
+        frequency: "week",
+        fromHistoricalDate: { type: "relativeSpecific", period: "lastMonth" },
+        limit: 16,
+        additionalPrompt: "Calculate total revenue by summing DEX fees and Gas fees for each period. For the latest value, report the combined total from the most recent week. For historical trend analysis: 1) Examine the overall combined revenue trend, noting any significant changes; 2) Compare DEX fees vs Gas fees to identify which component is driving changes; 3) Calculate week-over-week percentage changes to highlight growth or decline patterns."
     },
     {
-        name: "Kaia Weekly Addresses with Non-zero Balance(Over $10 KAIA balance)",
+        name: "Kaia Active Weekly Addresses with Over $10 KAIA balance",
         queryId: 4986206,
-        sectionUrl: "https://dune.com/queries/4986206/",
-        frequency: "weekly",
-        fromHistoricalDate: "past month",
+        sectionUrl: "https://dune.com/kaia_foundation/kaia-kpi-full-dashboard#non-zero-balance-addresses",
+        frequency: "week",
+        fromHistoricalDate: { type: "relativeSpecific", period: "lastMonth" },
         limit: 8
     },
     {
-        name: "Kaia Daily Volume",
+        name: "Kaia Weekly Trading Volume",
         queryId: 4966021,
-        sectionUrl: "https://dune.com/queries/4966021/",
-        frequency: "daily",
-        fromHistoricalDate: "past month",
-        limit: 62
+        sectionUrl: "https://dune.com/kaia_foundation/2025-kaia-kpi-dashboard#trading-volume",
+        frequency: "week",
+        fromHistoricalDate: { type: "relativeSpecific", period: "lastMonth" },
+        limit: 8
     },
     {
         name: "Kaia - TVL(Including Liquid staking TVL)",
         queryId: 4230294,
-        sectionUrl: "https://dune.com/queries/4230294",
-        frequency: "daily",
-        fromHistoricalDate: "past month",
+        sectionUrl: "https://dune.com/kaia_foundation/kaia-kpi-full-dashboard#tvl-of-kaiakaia-ecosystem",
+        frequency: "date",
+        fromHistoricalDate: { type: "relativeSpecific", period: "lastMonth" },
         limit: 62
     }
 ]

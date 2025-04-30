@@ -16,18 +16,27 @@ export interface MetricAnalysis {
   
   /** URL to the Dune Analytics dashboard section for this metric */
   sectionUrl: string;
+
+  /** Frequency of the metric update (e.g., daily, weekly) */
+  frequency: string;
   
   /** Most recent data point value for the metric */
-  latestValue: number;
+  latestValue: string;
   
   /** Absolute change between the latest and previous value */
-  absoluteChange: number;
+  absoluteChange: string;
   
   /** Percentage change between the latest and previous value */
-  percentageChange: number;
+  percentageChange: string;
   
   /** Average value of the metric over the historical period */
-  historicalAverage: number;
+  historicalAverage: string;
+
+  /** Date from which the historical average is calculated */
+  fromHistoricalDate: string;
+
+  /** Trend noticed in the historical period given */
+  historicalTrend: string;
   
   /** AI-generated analysis text explaining the metric's movement and significance */
   technicalAnalysis: string;
