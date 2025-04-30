@@ -64,6 +64,9 @@ const generateContent = asyncErrorHandler(async ({
     model: modelName,
     contents: prompt,
     config: {
+      thinkingConfig: {
+        thinkingBudget: 5000,
+      },
       systemInstruction: systemInstruction,
       temperature: temperature,
       maxOutputTokens: maxOutputTokens,

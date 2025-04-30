@@ -216,10 +216,10 @@ Output your response strictly in the following JSON format:
     "sectionUrl": "${metric.sectionUrl}", //string
     "frequency": "${metric.frequency}", //string
     "fromHistoricalDate": "${historicalPeriodDescription}", //string
-    "latestValue": "The most recent data point value with proper formatting", //string
-    "absoluteChange": "The calculated recent_absolute_change with proper formatting", //string
-    "percentageChange": "The calculated recent_percentage_change with proper formatting (e.g., '+15.25%' or '-5.01%')", //string
-    "historicalAverage": "The calculated historical_average with proper formatting", //string
+    "latestValue": "latest_value", //string 
+    "absoluteChange": "recent_absolute_change", //string
+    "percentageChange": "recent_percentage_change", //string
+    "historicalAverage": "historical_average", //string
     "historicalTrend": "A brief description of the historical trend pattern", //string
     "technicalAnalysis": "Your comprehensive technical analysis comparing recent and historical trends", //string
     "significance": "LOW | MEDIUM | HIGH | CRITICAL" //string
