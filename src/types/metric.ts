@@ -15,7 +15,7 @@ export interface Metric {
     sectionUrl: string;
     
     /** How often the metric is updated/collected */
-    frequency: "daily" | "weekly" | "monthly" | "yearly";
+    frequency: "date" | "week" | "month" | "year";
     
     /** Human-readable time period for historical data comparison */
     fromHistoricalDate: string;

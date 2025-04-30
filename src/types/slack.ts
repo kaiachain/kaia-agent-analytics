@@ -16,6 +16,9 @@ export interface MetricAnalysis {
   
   /** URL to the Dune Analytics dashboard section for this metric */
   sectionUrl: string;
+
+  /** Frequency of the metric update (e.g., daily, weekly) */
+  frequency: string;
   
   /** Most recent data point value for the metric */
   latestValue: string;

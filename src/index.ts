@@ -85,6 +85,7 @@ Output your response strictly in the following JSON format:
 {
     "metricName": "${metric.name}", //string
     "sectionUrl": "${metric.sectionUrl}", //string
+    "frequency": "${metric.frequency}", //string
     "fromHistoricalDate": "${metric.fromHistoricalDate}", //string
     "latestValue": "The most recent data point value with proper formatting", //string
     "absoluteChange": "The calculated recent_absolute_change with proper formatting", //string
