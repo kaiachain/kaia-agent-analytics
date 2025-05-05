@@ -31,6 +31,7 @@
     "date-fns": "^4.1.0",
     "dotenv": "^16.5.0",
     "node-cron": "^3.0.3",
+    "node-fetch": "^3.3.2",
     "winston": "^3.17.0"
   },
   "devDependencies": {
