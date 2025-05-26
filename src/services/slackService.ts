@@ -56,7 +56,7 @@ const createMetricsGrid = (metricsData: MetricAnalysis[]): any[] => {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `*${metric.metricName}*\n_Significance: ${metric.significance}_`
+        text: `*${metric.metricName}*\n_Significance: ${metric.significance == 'HIGH' ? 'HIGH ❗️' : metric.significance == 'MEDIUM' ? 'MEDIUM ⚠️' : 'LOW'}_`
       },
       accessory: {
         type: "button",
@@ -74,7 +74,7 @@ const createMetricsGrid = (metricsData: MetricAnalysis[]): any[] => {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `*Latest:* ${metric.latestValue}\n*Percentage Change (from last ${metric.frequency}):* ${metric.percentageChange}\n*Absolute Change (from last ${metric.frequency}):* ${metric.absoluteChange}\n*Historical Average (${metric.fromHistoricalDate}):* ${metric.historicalAverage}`
+        text: `*Latest:* ${metric.latestValue}\n*Change (from last ${metric.frequency}):* ${metric.percentageChange} (${metric.absoluteChange})${parseInt(metric.percentageChange) > 0 ? ' 🟢' : ' 🔴'}\n*Historical Average (${metric.fromHistoricalDate}):* ${metric.historicalAverage}`
       }
     });
 
@@ -111,6 +111,62 @@ const createMetricsGrid = (metricsData: MetricAnalysis[]): any[] => {
 };
 
 /**
+ * Creates a table-style metrics display using Slack block format.
+ * This approach uses fields to simulate a table layout.
+ * 
+ * @param metricsData - Array of MetricAnalysis objects to format as a table
+ * @returns An array of Slack blocks representing the metrics in a table
+ */
+const createMetricsTable = (metricsData: MetricAnalysis[]): any[] => {
+  logger.debug('Creating table-style metrics layout for Slack', { metricsCount: metricsData.length });
+
+  const blocks: any[] = [
+    {
+      type: "header",
+      text: {
+        type: "plain_text",
+        text: "Metrics Overview Table",
+        emoji: true
+      }
+    },
+    {
+      type: "section",
+      fields: [
+        "*Metric Name*", "*Latest Value*", "*Significance*", "*Change*"
+      ].map((header) => ({
+        type: "mrkdwn",
+        text: header
+      }))
+    },
+    {
+      type: "divider"
+    }
+  ];
+
+  for (const metric of metricsData) {
+    blocks.push({
+      type: "section",
+      fields: [
+        `*${metric.metricName}*`,
+        `${metric.latestValue}`,
+        `${metric.significance == 'HIGH' ? 'HIGH ❗️' : metric.significance == 'MEDIUM' ? 'MEDIUM ⚠️' : 'LOW'}`,
+        `${metric.percentageChange} (${metric.absoluteChange})${parseInt(metric.percentageChange) > 0 ? ' 🟢' : ' 🔴'}`,
+      ].map((value) => ({
+        type: "mrkdwn",
+        text: value
+      }))
+    });
+
+    blocks.push({
+      type: "divider"
+    });
+  }
+
+  logger.debug('Table-style metrics created successfully', { blockCount: blocks.length });
+  return blocks;
+};
+
+/**
  * Sends a formatted message to Slack displaying metrics data in a grid layout.
  * 
  * This function prepares a structured Slack message with:
@@ -130,8 +186,8 @@ const createMetricsGrid = (metricsData: MetricAnalysis[]): any[] => {
  *         but these are handled by the asyncErrorHandler wrapper
  */
 export const sendGridFormattedSlackMessage = asyncErrorHandler(async (metricsData: MetricAnalysis[]): Promise<void> => {
-  logger.info(`Preparing to send metric analysis to Slack with grid layout`, { metricCount: metricsData.length });
-  
+  logger.info(`Preparing to send metric analysis to Slack with grid and table layout`, { metricCount: metricsData.length });
+
   const allBlocks: any[] = []; 
 
   // 1. Generate and add the date block
@@ -145,19 +201,20 @@ export const sendGridFormattedSlackMessage = asyncErrorHandler(async (metricsDat
       }
   });
   allBlocks.push({ type: "divider" });
-  
-  // 2. Add the metrics grid
+
+  // 2. Add the metrics table
+  const tableBlocks = createMetricsTable(metricsData);
+  allBlocks.push(...tableBlocks);
+
+  // 3. Add the metrics grid
   const gridBlocks = createMetricsGrid(metricsData);
   allBlocks.push(...gridBlocks);
-  
-  // 3. Add detailed analysis sections for each metric
-  // (Code here would be the same as in sendFormattedSlackMessage)
-  
+
   // 4. Send the message
   if (allBlocks.length > 2) {
     const payload = { blocks: allBlocks };
     await webhook.send(payload);
-    logger.info(`Successfully sent Slack message with grid layout`);
+    logger.info(`Successfully sent Slack message with grid and table layout`);
   } else {
     logger.warn("No metrics data provided to send to Slack");
   }
